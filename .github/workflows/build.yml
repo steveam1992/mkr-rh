@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mkrcart-${{ matrix.nombre }}
+          name: mkr-rh-${{ matrix.nombre }}
           path: |
             dist/*.exe
             dist/*.dmg
