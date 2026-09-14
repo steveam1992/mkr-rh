@@ -2,8 +2,36 @@ import { BrowserWindow, dialog } from 'electron'
 import fs from 'fs'
 import { limpiar, oNulo, num, hoy, round2, sumarDias } from '../utils'
 import { calcularIsr, cuotaObreroImss, montoHorasExtra, aguinaldoProporcional } from '../lft'
+import { DESTINO, ETIQUETA_CONCEPTO, vigentesPara, importeDe } from './conceptos'
 
 const TIPOS = { semanal: 7, catorcenal: 14, quincenal: 15, mensual: 30 }
+
+// Campos del recibo que pueden venir de los conceptos fijos del empleado.
+const CAMPOS_CONCEPTO = ['bonos', 'otras_percepciones', 'infonavit', 'fonacot', 'prestamos', 'otras_deducciones']
+
+// Reparte los conceptos vigentes del empleado en los renglones del recibo. Los creditos
+// (FONACOT, INFONAVIT, prestamos) se topan a lo que falta por pagar, de modo que el
+// ultimo descuento sea el remanente exacto y no se pase.
+function conceptosDelPeriodo(db, empleado, periodo, sueldoPeriodo) {
+  const campos = {}
+  const aplicaciones = []
+  let exentas = 0
+
+  for (const concepto of vigentesPara(db, empleado.id, periodo)) {
+    if (concepto.liquidado) continue
+
+    const importe = importeDe(concepto, { sueldoPeriodo, saldoDisponible: concepto.saldo })
+    if (importe <= 0) continue
+
+    const campo = DESTINO[concepto.clave] || (concepto.tipo === 'percepcion' ? 'otras_percepciones' : 'otras_deducciones')
+    campos[campo] = round2((campos[campo] || 0) + importe)
+    if (concepto.tipo === 'percepcion' && !concepto.gravable) exentas = round2(exentas + importe)
+
+    aplicaciones.push({ concepto_id: concepto.id, importe })
+  }
+
+  return { campos, aplicaciones, exentas }
+}
 
 function contexto(db) {
   return {
@@ -101,10 +129,15 @@ function recalcular(recibo, empleado, { cfg, tarifa }) {
   const descuentoFaltas = round2(sd * (num(recibo.dias_falta) + num(recibo.dias_incapacidad)))
 
   // Exenciones del art. 93 LISR que se aplican solas: aguinaldo hasta 30 UMA y prima
-  // vacacional hasta 15 UMA. El resto se considera gravable.
+  // vacacional hasta 15 UMA. Ademas, los conceptos del empleado marcados como no
+  // gravables (despensa, transporte...) ya vienen sumados en percepciones_exentas.
   const aguinaldoExento = Math.min(aguinaldo, 30 * uma)
   const primaExenta = Math.min(primaVacacional, 15 * uma)
-  const baseGravable = Math.max(0, round2(totalPercepciones - aguinaldoExento - primaExenta - descuentoFaltas))
+  const exentas = num(recibo.percepciones_exentas)
+  const baseGravable = Math.max(
+    0,
+    round2(totalPercepciones - aguinaldoExento - primaExenta - exentas - descuentoFaltas)
+  )
 
   const impuesto = calcularIsr({
     baseGravable,
@@ -121,11 +154,12 @@ function recalcular(recibo, empleado, { cfg, tarifa }) {
   }).total
 
   const infonavit = num(recibo.infonavit)
+  const fonacot = num(recibo.fonacot)
   const prestamos = num(recibo.prestamos)
   const otrasDeducciones = num(recibo.otras_deducciones)
 
   const totalDeducciones = round2(
-    impuesto.retencion + imss + infonavit + prestamos + descuentoFaltas + otrasDeducciones
+    impuesto.retencion + imss + infonavit + fonacot + prestamos + descuentoFaltas + otrasDeducciones
   )
 
   return {
@@ -134,6 +168,7 @@ function recalcular(recibo, empleado, { cfg, tarifa }) {
     sueldo,
     monto_horas_extra: round2(montoExtra),
     total_percepciones: totalPercepciones,
+    percepciones_exentas: round2(exentas),
     isr: impuesto.isr,
     subsidio: impuesto.subsidio,
     imss,
@@ -148,9 +183,10 @@ function guardarRecibo(db, recibo) {
     `INSERT INTO nomina_recibos (
         periodo_id, empleado_id, dias_trabajados, dias_falta, dias_incapacidad, dias_vacaciones,
         salario_diario, sueldo, horas_extra, monto_horas_extra, prima_vacacional, aguinaldo,
-        bonos, otras_percepciones, total_percepciones, isr, subsidio, imss, infonavit,
-        prestamos, descuento_faltas, otras_deducciones, total_deducciones, neto, notas)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        bonos, otras_percepciones, total_percepciones, percepciones_exentas, isr, subsidio,
+        imss, infonavit, fonacot, prestamos, descuento_faltas, otras_deducciones,
+        total_deducciones, neto, notas)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (periodo_id, empleado_id) DO UPDATE SET
         dias_trabajados = excluded.dias_trabajados,
         dias_falta = excluded.dias_falta,
@@ -165,10 +201,12 @@ function guardarRecibo(db, recibo) {
         bonos = excluded.bonos,
         otras_percepciones = excluded.otras_percepciones,
         total_percepciones = excluded.total_percepciones,
+        percepciones_exentas = excluded.percepciones_exentas,
         isr = excluded.isr,
         subsidio = excluded.subsidio,
         imss = excluded.imss,
         infonavit = excluded.infonavit,
+        fonacot = excluded.fonacot,
         prestamos = excluded.prestamos,
         descuento_faltas = excluded.descuento_faltas,
         otras_deducciones = excluded.otras_deducciones,
@@ -180,8 +218,9 @@ function guardarRecibo(db, recibo) {
     num(recibo.dias_incapacidad), num(recibo.dias_vacaciones), num(recibo.salario_diario),
     num(recibo.sueldo), num(recibo.horas_extra), num(recibo.monto_horas_extra),
     num(recibo.prima_vacacional), num(recibo.aguinaldo), num(recibo.bonos),
-    num(recibo.otras_percepciones), num(recibo.total_percepciones), num(recibo.isr),
-    num(recibo.subsidio), num(recibo.imss), num(recibo.infonavit), num(recibo.prestamos),
+    num(recibo.otras_percepciones), num(recibo.total_percepciones),
+    num(recibo.percepciones_exentas), num(recibo.isr), num(recibo.subsidio), num(recibo.imss),
+    num(recibo.infonavit), num(recibo.fonacot), num(recibo.prestamos),
     num(recibo.descuento_faltas), num(recibo.otras_deducciones), num(recibo.total_deducciones),
     num(recibo.neto), oNulo(recibo.notas)
   )
@@ -255,8 +294,30 @@ export function register(ipcMain, getDb) {
       db.prepare('SELECT * FROM nomina_recibos WHERE periodo_id = ?').all(periodo_id).map((r) => [r.empleado_id, r])
     )
 
+    // Cuanto de cada renglon venia de conceptos en la corrida anterior. Se necesita para
+    // separar la parte capturada a mano de la automatica: sin esto, un concepto que vence
+    // o se desactiva dejaria su importe pegado en el recibo.
+    const conceptoPrevio = new Map()
+    for (const fila of db.prepare(
+      `SELECT r.empleado_id, c.clave, SUM(a.importe) AS total
+       FROM concepto_aplicaciones a
+       JOIN nomina_recibos r ON r.id = a.recibo_id
+       JOIN conceptos_empleado c ON c.id = a.concepto_id
+       WHERE a.periodo_id = ?
+       GROUP BY r.empleado_id, c.clave`
+    ).all(periodo_id)) {
+      const campo = DESTINO[fila.clave]
+      if (!campo) continue
+      const porCampo = conceptoPrevio.get(fila.empleado_id) || {}
+      porCampo[campo] = round2((porCampo[campo] || 0) + num(fila.total))
+      conceptoPrevio.set(fila.empleado_id, porCampo)
+    }
+
     db.exec('BEGIN')
     try {
+      // Se rehacen desde cero: si no, regenerar el periodo amortizaria dos veces.
+      db.prepare('DELETE FROM concepto_aplicaciones WHERE periodo_id = ?').run(periodo_id)
+
       for (const empleado of empleados) {
         const incidencias = incidenciasDelPeriodo(db, empleado, periodo)
         const previo = conservarManuales ? previos.get(empleado.id) : null
@@ -265,6 +326,9 @@ export function register(ipcMain, getDb) {
         const primaVacacional = incidencias.dias_prima > 0
           ? round2(empleado.salario_diario * incidencias.dias_prima * num(ctx.cfg.prima_vacacional) / 100)
           : num(previo?.prima_vacacional)
+
+        const sueldoPeriodo = round2(num(empleado.salario_diario) * diasPeriodo)
+        const conceptos = conceptosDelPeriodo(db, empleado, periodo, sueldoPeriodo)
 
         const base = {
           periodo_id,
@@ -278,15 +342,30 @@ export function register(ipcMain, getDb) {
           monto_horas_extra: 0,
           prima_vacacional: primaVacacional,
           aguinaldo: num(previo?.aguinaldo),
-          bonos: num(previo?.bonos),
-          otras_percepciones: num(previo?.otras_percepciones),
-          infonavit: num(previo?.infonavit),
-          prestamos: num(previo?.prestamos),
-          otras_deducciones: num(previo?.otras_deducciones),
+          percepciones_exentas: conceptos.exentas,
           notas: previo?.notas || null
         }
 
+        // Cada renglon se rearma como "lo capturado a mano" + "lo que aportan los
+        // conceptos vigentes ahora". Lo manual sobrevive a regenerar; lo automatico se
+        // recalcula siempre, asi que un concepto vencido desaparece del recibo.
+        const previoConcepto = conceptoPrevio.get(empleado.id) || {}
+        for (const campo of CAMPOS_CONCEPTO) {
+          const manual = Math.max(0, round2(num(previo?.[campo]) - num(previoConcepto[campo])))
+          base[campo] = round2(manual + num(conceptos.campos[campo]))
+        }
+
         guardarRecibo(db, recalcular(base, empleado, ctx))
+
+        if (conceptos.aplicaciones.length) {
+          const recibo = db.prepare(
+            'SELECT id FROM nomina_recibos WHERE periodo_id = ? AND empleado_id = ?'
+          ).get(periodo_id, empleado.id)
+          const stmt = db.prepare(
+            'INSERT INTO concepto_aplicaciones (concepto_id, periodo_id, recibo_id, importe) VALUES (?, ?, ?, ?)'
+          )
+          for (const a of conceptos.aplicaciones) stmt.run(a.concepto_id, periodo_id, recibo.id, a.importe)
+        }
       }
 
       // Un empleado dado de baja despues de generar deja de aparecer en el periodo.
@@ -444,6 +523,12 @@ export function register(ipcMain, getDb) {
 
     const periodo = db.prepare('SELECT * FROM nomina_periodos WHERE id = ?').get(recibo.periodo_id)
     const cfg = db.prepare('SELECT * FROM configuracion WHERE id = 1').get()
+    const conceptos = db.prepare(
+      `SELECT a.importe, c.clave, c.tipo, c.descripcion, c.numero_credito
+       FROM concepto_aplicaciones a
+       JOIN conceptos_empleado c ON c.id = a.concepto_id
+       WHERE a.recibo_id = ? ORDER BY c.tipo, c.clave`
+    ).all(recibo.id)
 
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Guardar recibo de nómina',
@@ -454,7 +539,7 @@ export function register(ipcMain, getDb) {
 
     const ventana = new BrowserWindow({ show: false, webPreferences: { offscreen: true } })
     try {
-      const html = plantillaRecibo({ recibo, periodo, cfg })
+      const html = plantillaRecibo({ recibo, periodo, cfg, conceptos })
       await ventana.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
       const pdf = await ventana.webContents.printToPDF({ pageSize: 'Letter', printBackground: true })
       fs.writeFileSync(filePath, pdf)
@@ -471,23 +556,40 @@ function dinero(n) {
   return Number(n || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
 }
 
-function plantillaRecibo({ recibo, periodo, cfg }) {
+function plantillaRecibo({ recibo, periodo, cfg, conceptos = [] }) {
+  // Cada concepto del empleado va con su propio nombre y, si es un credito, su numero.
+  // Lo que se haya capturado a mano en ese mismo renglon se muestra como remanente.
+  const detalle = (campo, etiquetaGenerica) => {
+    const propios = conceptos.filter((c) => (DESTINO[c.clave] || '') === campo)
+    const sumaPropios = propios.reduce((t, c) => t + num(c.importe), 0)
+    const manual = round2(num(recibo[campo]) - sumaPropios)
+
+    const filas = propios.map((c) => [
+      `${ETIQUETA_CONCEPTO[c.clave] || c.clave}${c.numero_credito ? ` (${c.numero_credito})` : ''}` +
+        `${c.descripcion ? ` — ${c.descripcion}` : ''}`,
+      c.importe
+    ])
+    if (manual > 0.005) filas.push([etiquetaGenerica, manual])
+    return filas
+  }
+
   const percepciones = [
     ['Sueldo', recibo.sueldo],
     ['Horas extra', recibo.monto_horas_extra],
     ['Prima vacacional', recibo.prima_vacacional],
     ['Aguinaldo', recibo.aguinaldo],
-    ['Bonos', recibo.bonos],
-    ['Otras percepciones', recibo.otras_percepciones]
+    ...detalle('bonos', 'Bonos'),
+    ...detalle('otras_percepciones', 'Otras percepciones')
   ].filter(([, v]) => num(v) > 0)
 
   const deducciones = [
     ['ISR retenido', round2(num(recibo.isr) - num(recibo.subsidio))],
     ['IMSS', recibo.imss],
-    ['Infonavit', recibo.infonavit],
-    ['Préstamos', recibo.prestamos],
+    ...detalle('infonavit', 'INFONAVIT'),
+    ...detalle('fonacot', 'FONACOT'),
+    ...detalle('prestamos', 'Préstamos'),
     ['Faltas e incapacidades', recibo.descuento_faltas],
-    ['Otras deducciones', recibo.otras_deducciones]
+    ...detalle('otras_deducciones', 'Otras deducciones')
   ].filter(([, v]) => num(v) > 0)
 
   const filas = (lista) => lista.map(([k, v]) => `<tr><td>${k}</td><td class="r">${dinero(v)}</td></tr>`).join('')

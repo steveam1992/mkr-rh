@@ -4,6 +4,7 @@ import * as config from './config'
 import * as catalogos from './catalogos'
 import * as empleados from './empleados'
 import * as documentos from './documentos'
+import * as conceptos from './conceptos'
 import * as vacaciones from './vacaciones'
 import * as incapacidades from './incapacidades'
 import * as permisos from './permisos'
@@ -19,6 +20,7 @@ export function registerIpc(ipcMain, getDb) {
   catalogos.register(ipcMain, getDb)
   empleados.register(ipcMain, getDb)
   documentos.register(ipcMain, getDb)
+  conceptos.register(ipcMain, getDb)
   vacaciones.register(ipcMain, getDb)
   incapacidades.register(ipcMain, getDb)
   permisos.register(ipcMain, getDb)

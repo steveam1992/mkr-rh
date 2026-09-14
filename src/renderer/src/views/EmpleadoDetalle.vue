@@ -176,6 +176,13 @@
         </table>
       </div>
 
+      <!-- Percepciones y deducciones -->
+      <ConceptosEmpleado
+        v-else-if="tab === 'conceptos'"
+        :empleado-id="id"
+        @cambio="cargarConceptos"
+      />
+
       <!-- Ausencias -->
       <div v-else-if="tab === 'ausencias'" class="panel">
         <section class="card">
@@ -411,6 +418,7 @@
 import { mapGetters } from 'vuex'
 import formats from '../mixin/formats'
 import EmpleadoForm from '../components/EmpleadoForm.vue'
+import ConceptosEmpleado from '../components/ConceptosEmpleado.vue'
 
 const ETIQUETA_DOC = {
   contrato: 'Contrato',
@@ -476,7 +484,7 @@ const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', '
 export default {
   name: 'EmpleadoDetalle',
   mixins: [formats],
-  components: { EmpleadoForm },
+  components: { EmpleadoForm, ConceptosEmpleado },
   props: { id: { type: [String, Number], required: true } },
   data() {
     return {
@@ -492,6 +500,7 @@ export default {
       incapacidades: [],
       permisos: [],
       movimientos: [],
+      numConceptos: 0,
       tab: 'resumen',
       mostrarForm: false,
       seccionForm: 'personales',
@@ -508,6 +517,7 @@ export default {
       return [
         { clave: 'resumen', label: 'Resumen' },
         { clave: 'documentos', label: 'Documentos', conteo: this.documentos.length },
+        { clave: 'conceptos', label: 'Percepciones y deducciones', conteo: this.numConceptos },
         { clave: 'ausencias', label: 'Ausencias', conteo: this.vacaciones.length + this.incapacidades.length + this.permisos.length },
         { clave: 'historial', label: 'Historial', conteo: this.movimientos.length }
       ]
@@ -547,18 +557,23 @@ export default {
         this.$router.replace('/empleados')
         return
       }
-      const [documentos, vacaciones, incapacidades, permisos, movimientos] = await Promise.all([
+      const [documentos, vacaciones, incapacidades, permisos, movimientos, conceptos] = await Promise.all([
         window.api.documentos.listar(Number(this.id)),
         window.api.vacaciones.listar({ empleado_id: Number(this.id), estatus: 'todos' }),
         window.api.incapacidades.listar({ empleado_id: Number(this.id) }),
         window.api.permisos.listar({ empleado_id: Number(this.id), estatus: 'todos' }),
-        window.api.empleados.movimientos(Number(this.id))
+        window.api.empleados.movimientos(Number(this.id)),
+        window.api.conceptos.listar({ empleado_id: Number(this.id) })
       ])
       this.documentos = documentos
       this.vacaciones = vacaciones
       this.incapacidades = incapacidades
       this.permisos = permisos
       this.movimientos = movimientos
+      this.numConceptos = conceptos.length
+    },
+    async cargarConceptos() {
+      this.numConceptos = (await window.api.conceptos.listar({ empleado_id: Number(this.id) })).length
     },
     editar(seccion = 'personales') {
       this.seccionForm = seccion

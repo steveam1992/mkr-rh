@@ -76,6 +76,16 @@ contextBridge.exposeInMainWorld('bridge', {
     porVencer: invoke('documentos:porVencer'),
     abrirCarpeta: invoke('documentos:abrirCarpeta')
   },
+  conceptos: {
+    listar: invoke('conceptos:listar'),
+    crear: invoke('conceptos:crear'),
+    actualizar: invoke('conceptos:actualizar'),
+    toggleActivo: invoke('conceptos:toggleActivo'),
+    eliminar: invoke('conceptos:eliminar'),
+    aplicaciones: invoke('conceptos:aplicaciones'),
+    delRecibo: invoke('conceptos:delRecibo'),
+    creditosActivos: invoke('conceptos:creditosActivos')
+  },
   vacaciones: {
     listar: invoke('vacaciones:listar'),
     saldos: invoke('vacaciones:saldos'),

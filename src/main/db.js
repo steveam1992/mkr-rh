@@ -263,6 +263,39 @@ export function init() {
       UNIQUE (empleado_id, fecha)
     );
 
+    -- Percepciones y deducciones fijas del empleado (bonos, despensa, FONACOT,
+    -- INFONAVIT, prestamos...). Entran solas a cada nomina en lugar de recapturarse.
+    CREATE TABLE IF NOT EXISTS conceptos_empleado (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empleado_id INTEGER NOT NULL REFERENCES empleados(id),
+      tipo TEXT NOT NULL DEFAULT 'percepcion',
+      clave TEXT NOT NULL DEFAULT 'otro',
+      descripcion TEXT,
+      calculo TEXT NOT NULL DEFAULT 'fijo',
+      monto REAL NOT NULL DEFAULT 0,
+      gravable INTEGER NOT NULL DEFAULT 1,
+      numero_credito TEXT,
+      total_credito REAL NOT NULL DEFAULT 0,
+      fecha_inicio TEXT,
+      fecha_fin TEXT,
+      activo INTEGER NOT NULL DEFAULT 1,
+      notas TEXT,
+      usuario_id INTEGER REFERENCES usuarios(id),
+      creado_en TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+
+    -- Cada vez que un concepto se aplica a un recibo queda aqui. El saldo de un credito
+    -- se deriva de estas filas en lugar de irse restando a mano: asi regenerar o borrar
+    -- un periodo no descuadra la amortizacion.
+    CREATE TABLE IF NOT EXISTS concepto_aplicaciones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      concepto_id INTEGER NOT NULL REFERENCES conceptos_empleado(id) ON DELETE CASCADE,
+      periodo_id INTEGER NOT NULL REFERENCES nomina_periodos(id) ON DELETE CASCADE,
+      recibo_id INTEGER NOT NULL REFERENCES nomina_recibos(id) ON DELETE CASCADE,
+      importe REAL NOT NULL DEFAULT 0,
+      UNIQUE (concepto_id, periodo_id)
+    );
+
     CREATE TABLE IF NOT EXISTS nomina_periodos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nombre TEXT NOT NULL,
@@ -297,10 +330,12 @@ export function init() {
       bonos REAL NOT NULL DEFAULT 0,
       otras_percepciones REAL NOT NULL DEFAULT 0,
       total_percepciones REAL NOT NULL DEFAULT 0,
+      percepciones_exentas REAL NOT NULL DEFAULT 0,
       isr REAL NOT NULL DEFAULT 0,
       subsidio REAL NOT NULL DEFAULT 0,
       imss REAL NOT NULL DEFAULT 0,
       infonavit REAL NOT NULL DEFAULT 0,
+      fonacot REAL NOT NULL DEFAULT 0,
       prestamos REAL NOT NULL DEFAULT 0,
       descuento_faltas REAL NOT NULL DEFAULT 0,
       otras_deducciones REAL NOT NULL DEFAULT 0,
@@ -316,6 +351,10 @@ export function init() {
     CREATE INDEX IF NOT EXISTS idx_asistencia_fecha ON asistencia(fecha);
     CREATE INDEX IF NOT EXISTS idx_recibos_periodo ON nomina_recibos(periodo_id);
   `)
+
+  // Bases creadas antes de que existieran los conceptos del empleado.
+  ensureColumn('nomina_recibos', 'percepciones_exentas', 'REAL NOT NULL DEFAULT 0')
+  ensureColumn('nomina_recibos', 'fonacot', 'REAL NOT NULL DEFAULT 0')
 
   const instalacionNueva = seedConfiguracion()
   seedTablaVacaciones()

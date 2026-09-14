@@ -75,6 +75,7 @@
                 <th class="num">Percepciones</th>
                 <th class="num">ISR</th>
                 <th class="num">IMSS</th>
+                <th class="num">Créditos</th>
                 <th class="num">Deducciones</th>
                 <th class="num">Neto</th>
                 <th></th>
@@ -97,6 +98,7 @@
                 <td class="num">{{ formatMoney(r.total_percepciones) }}</td>
                 <td class="num">{{ formatMoney(r.isr - r.subsidio) }}</td>
                 <td class="num">{{ formatMoney(r.imss) }}</td>
+                <td class="num">{{ formatMoney(r.infonavit + r.fonacot + r.prestamos) }}</td>
                 <td class="num">{{ formatMoney(r.total_deducciones) }}</td>
                 <td class="num"><b>{{ formatMoney(r.neto) }}</b></td>
                 <td>
@@ -107,7 +109,7 @@
                 </td>
               </tr>
               <tr v-if="recibos.length === 0">
-                <td colspan="10" class="empty">
+                <td colspan="11" class="empty">
                   Aún no hay recibos. Usa "Generar / actualizar" para armarlos con la plantilla activa.
                 </td>
               </tr>
@@ -218,8 +220,12 @@
               <input type="number" min="0" step="0.5" v-model.number="reciboEditado.dias_incapacidad" />
             </div>
             <div class="campo">
-              <label>Infonavit</label>
+              <label>INFONAVIT</label>
               <input type="number" min="0" step="0.01" v-model.number="reciboEditado.infonavit" />
+            </div>
+            <div class="campo">
+              <label>FONACOT</label>
+              <input type="number" min="0" step="0.01" v-model.number="reciboEditado.fonacot" />
             </div>
             <div class="campo">
               <label>Préstamos</label>
@@ -234,6 +240,25 @@
               <input type="text" v-model="reciboEditado.notas" />
             </div>
           </div>
+        </div>
+
+        <div class="card card--plano" v-if="conceptosRecibo.length">
+          <div class="card__titulo">Conceptos fijos del empleado aplicados en este periodo</div>
+          <ul class="conceptos">
+            <li v-for="(c, i) in conceptosRecibo" :key="i">
+              <span>
+                {{ ETIQUETA_CONCEPTO[c.clave] || c.clave }}
+                <span class="muted" v-if="c.numero_credito">· {{ c.numero_credito }}</span>
+              </span>
+              <b :style="{ color: c.tipo === 'percepcion' ? 'var(--green)' : 'var(--red)' }">
+                {{ c.tipo === 'percepcion' ? '+' : '−' }}{{ formatMoney(c.importe) }}
+              </b>
+            </li>
+          </ul>
+          <p class="muted">
+            Ya vienen sumados arriba. Se administran en el expediente del empleado,
+            pestaña "Percepciones y deducciones"; lo que escribas aquí se agrega encima.
+          </p>
         </div>
 
         <div class="card card--plano calculado">
@@ -289,6 +314,24 @@
 import { mapGetters } from 'vuex'
 import formats from '../mixin/formats'
 
+const ETIQUETA_CONCEPTO = {
+  bono: 'Bono',
+  puntualidad: 'Bono de puntualidad',
+  asistencia: 'Bono de asistencia',
+  productividad: 'Bono de productividad',
+  comision: 'Comisiones',
+  despensa: 'Vales de despensa',
+  transporte: 'Ayuda de transporte',
+  otra_percepcion: 'Otra percepción',
+  infonavit: 'INFONAVIT',
+  fonacot: 'FONACOT',
+  prestamo: 'Préstamo de la empresa',
+  caja_ahorro: 'Caja de ahorro',
+  pension_alimenticia: 'Pensión alimenticia',
+  sindicato: 'Cuota sindical',
+  otra_deduccion: 'Otra deducción'
+}
+
 const DIAS_POR_TIPO = { semanal: 7, catorcenal: 14, quincenal: 15, mensual: 30 }
 
 export default {
@@ -301,6 +344,8 @@ export default {
       recibos: [],
       formPeriodo: null,
       reciboEditado: null,
+      conceptosRecibo: [],
+      ETIQUETA_CONCEPTO,
       aguinaldos: null,
       error: ''
     }
@@ -393,9 +438,10 @@ export default {
       await this.cargarPeriodos()
     },
 
-    editar(recibo) {
+    async editar(recibo) {
       this.error = ''
       this.reciboEditado = { ...recibo }
+      this.conceptosRecibo = await window.api.conceptos.delRecibo(recibo.id)
     },
     async guardarRecibo() {
       this.error = ''
@@ -580,5 +626,22 @@ export default {
   padding: 5px 8px;
   font-size: 12.5px;
   text-align: right;
+}
+
+.conceptos {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.conceptos li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  border-bottom: 1px solid #F0EEFA;
+  padding-bottom: 5px;
 }
 </style>
