@@ -34,19 +34,28 @@ export function derechoVacaciones(fechaIngreso, tabla, alDia) {
     anios: ant.anios,
     antiguedad: ant.texto,
     diasDelAnioEnCurso,
+    diasUltimoPeriodo: ant.anios >= 1 ? diasVacacionesPorAnio(ant.anios, tabla) : 0,
     generados,
     proporcional,
     total: round2(generados + proporcional)
   }
 }
 
+// Los dias se devengan de golpe al cumplir cada anio de servicio (art. 76 LFT), no
+// poco a poco: lo que el empleado puede disfrutar son solo los anios ya cumplidos.
+// El proporcional del anio en curso todavia no se puede tomar, pero si se paga cuando
+// termina la relacion laboral (art. 79), por eso va aparte en `porFiniquito`.
 export function saldoVacaciones({ fechaIngreso, tabla, diasTomados = 0, ajustes = 0, alDia }) {
   const derecho = derechoVacaciones(fechaIngreso, tabla, alDia)
+  const tomados = round2(diasTomados)
+  const ajuste = round2(ajustes)
   return {
     ...derecho,
-    tomados: round2(diasTomados),
-    ajustes: round2(ajustes),
-    disponibles: round2(derecho.total + ajustes - diasTomados)
+    tomados,
+    ajustes: ajuste,
+    disponibles: round2(derecho.generados + ajuste - tomados),
+    porFiniquito: round2(derecho.total + ajuste - tomados),
+    proximoAniversario: proximoAniversarioLaboral(fechaIngreso, alDia)
   }
 }
 
@@ -54,7 +63,7 @@ export function saldoVacaciones({ fechaIngreso, tabla, diasTomados = 0, ajustes 
 // No se redondea: a dos decimales varias antiguedades caen en el mismo factor y el SDI
 // sale desviado. El redondeo se hace hasta el salario ya integrado.
 export function factorIntegracion({ anios, tabla, diasAguinaldo, primaVacacional }) {
-  const diasVac = diasVacacionesPorAnio(Math.max(1, anios || 1), tabla)
+  const diasVac = diasVacacionesPorAnio(Math.max(1, (Number(anios) || 0) + 1), tabla)
   const primaDias = (diasVac * Number(primaVacacional)) / 100
   return (365 + Number(diasAguinaldo) + primaDias) / 365
 }

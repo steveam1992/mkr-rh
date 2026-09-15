@@ -641,7 +641,7 @@ export default {
   justify-content: space-between;
   gap: 12px;
   font-size: 12.5px;
-  border-bottom: 1px solid #F0EEFA;
+  border-bottom: 1px solid #F1F1F2;
   padding-bottom: 5px;
 }
 </style>

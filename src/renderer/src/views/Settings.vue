@@ -652,7 +652,7 @@ export default {
   font-size: 12.5px;
   color: var(--text-2);
   padding-bottom: 6px;
-  border-bottom: 1px solid #F3F1FA;
+  border-bottom: 1px solid #F4F4F5;
 }
 
 .lista-datos b {

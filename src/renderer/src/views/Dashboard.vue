@@ -264,7 +264,7 @@ export default {
 }
 
 .kpi--accion:hover {
-  background: #E8E4FD;
+  background: #EDEDEF;
 }
 
 .kpi__valor {
@@ -343,7 +343,7 @@ export default {
   align-items: center;
   gap: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #F0EEFA;
+  border-bottom: 1px solid #F1F1F2;
 }
 
 .ausente__nombre {

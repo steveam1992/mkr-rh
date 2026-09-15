@@ -217,13 +217,18 @@
           </div>
 
           <div class="campo">
-            <label>Días de descanso</label>
+            <label>Días de descanso <span class="muted">(los que NO trabaja)</span></label>
             <div class="dias">
               <label v-for="(d, i) in DIAS" :key="i" class="checkbox">
                 <input type="checkbox" :value="i" v-model="descansos" />
                 {{ d }}
               </label>
             </div>
+            <p class="muted">Trabaja: <b>{{ resumenLaborables }}</b> · Descansa: <b>{{ resumenDescansos }}</b></p>
+            <p class="error" v-if="descansos.length >= 5">
+              Marcaste {{ descansos.length }} días de descanso. Aquí van los días que el
+              empleado NO trabaja: si trabaja de lunes a viernes, marca solo Sáb y Dom.
+            </p>
           </div>
         </template>
 
@@ -323,6 +328,12 @@ export default {
     ...mapGetters(['departamentos', 'puestos', 'usuarioActual']),
     esEdicion() {
       return !!this.empleado?.id
+    },
+    resumenDescansos() {
+      return DIAS.filter((d, i) => this.descansos.includes(i)).join(', ') || 'ninguno'
+    },
+    resumenLaborables() {
+      return DIAS.filter((d, i) => !this.descansos.includes(i)).join(', ') || 'ninguno'
     },
     puestosDisponibles() {
       if (!this.form.departamento_id) return this.puestos

@@ -101,8 +101,8 @@
               <th>Empleado</th>
               <th>Ingreso</th>
               <th class="num">Años</th>
-              <th class="num">Le tocan</th>
               <th class="num">Generados</th>
+              <th class="num">Próximo periodo</th>
               <th class="num">Tomados</th>
               <th class="num">Disponibles</th>
               <th>Prescribe</th>
@@ -117,8 +117,11 @@
               </td>
               <td>{{ formatFechaCorta(s.fecha_ingreso) }}</td>
               <td class="num">{{ s.anios }}</td>
-              <td class="num">{{ s.diasDelAnioEnCurso }}</td>
-              <td class="num">{{ s.total }}</td>
+              <td class="num">{{ s.generados }}</td>
+              <td class="num">
+                {{ s.diasDelAnioEnCurso }}
+                <div class="muted" v-if="s.proximoAniversario">{{ formatFechaCorta(s.proximoAniversario) }}</div>
+              </td>
               <td class="num">{{ s.tomados }}</td>
               <td class="num">
                 <b :style="{ color: s.disponibles > 0 ? 'var(--green)' : 'var(--text-3)' }">{{ s.disponibles }}</b>
@@ -175,8 +178,12 @@
           </div>
         </div>
         <p class="muted" v-if="diasNaturales">
-          {{ diasNaturales }} días naturales; se descuentan {{ form.dias }} hábiles
-          (sin contar descansos ni festivos).
+          {{ diasNaturales }} días naturales<template v-if="desglose.enDescanso"> − {{ desglose.enDescanso }} de descanso</template><template v-if="desglose.enFestivo"> − {{ desglose.enFestivo }} festivo(s)</template>
+          = <b>{{ form.dias }}</b> día(s) a descontar.
+        </p>
+        <p class="error" v-if="desglose.enDescanso >= 5">
+          Se están descartando {{ desglose.enDescanso }} días por descanso. Revisa los días de
+          descanso en la ficha del empleado: ahí se marcan los días que NO trabaja.
         </p>
 
         <div class="campo">
@@ -275,6 +282,7 @@ export default {
       aprobarDirecto: false,
       saldoEmpleado: null,
       diasNaturales: 0,
+      desglose: { enDescanso: 0, enFestivo: 0 },
       errorForm: '',
       ajuste: null,
       ajustesPrevios: []
@@ -319,6 +327,7 @@ export default {
       this.errorForm = ''
       this.aprobarDirecto = false
       this.diasNaturales = 0
+      this.desglose = { enDescanso: 0, enFestivo: 0 }
       this.saldoEmpleado = null
       this.form = {
         empleado_id: empleadoId,
@@ -347,6 +356,7 @@ export default {
       })
       this.form.dias = res.dias
       this.diasNaturales = res.naturales
+      this.desglose = { enDescanso: res.enDescanso, enFestivo: res.enFestivo }
     },
     async guardar(forzar = false) {
       this.errorForm = ''
@@ -433,7 +443,7 @@ export default {
   gap: 10px;
   font-size: 12.5px;
   font-weight: 600;
-  border-bottom: 1px solid #F3F1FA;
+  border-bottom: 1px solid #F4F4F5;
   padding-bottom: 5px;
 }
 

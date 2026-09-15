@@ -52,10 +52,13 @@
           </div>
           <ul class="lista-datos">
             <li><span>Derecho por años cumplidos</span><b>{{ empleado.vacaciones.generados }}</b></li>
-            <li><span>Proporcional del año en curso</span><b>{{ empleado.vacaciones.proporcional }}</b></li>
             <li><span>Días tomados</span><b>{{ empleado.vacaciones.tomados }}</b></li>
             <li v-if="empleado.vacaciones.ajustes"><span>Ajustes manuales</span><b>{{ empleado.vacaciones.ajustes }}</b></li>
-            <li><span>Le tocan este año</span><b>{{ empleado.vacaciones.diasDelAnioEnCurso }} días</b></li>
+            <li><span>Proporcional en curso (solo finiquito)</span><b>{{ empleado.vacaciones.proporcional }}</b></li>
+            <li v-if="empleado.vacaciones.proximoAniversario">
+              <span>Próximo periodo</span>
+              <b>+{{ empleado.vacaciones.diasDelAnioEnCurso }} el {{ formatFechaCorta(empleado.vacaciones.proximoAniversario) }}</b>
+            </li>
           </ul>
           <router-link to="/vacaciones" class="btn-secondary btn-sm bloque">Registrar vacaciones</router-link>
         </section>
@@ -807,7 +810,7 @@ export default {
   font-size: 12.5px;
   color: var(--text-2);
   padding-bottom: 6px;
-  border-bottom: 1px solid #F3F1FA;
+  border-bottom: 1px solid #F4F4F5;
 }
 
 .lista-datos b {

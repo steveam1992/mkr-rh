@@ -15,20 +15,30 @@ function diasDescanso(empleado) {
 }
 
 // Dias de disfrute reales: se excluyen los descansos del empleado y los festivos.
-function diasHabiles(db, empleado, inicio, fin) {
+// Se devuelve el desglose y no solo el total, porque cuando el numero no cuadra con lo
+// que espera quien captura casi siempre es que el empleado tiene mal sus descansos.
+function desgloseDias(db, empleado, inicio, fin) {
   const descansos = diasDescanso(empleado)
   const festivos = new Set(
     db.prepare('SELECT fecha FROM dias_festivos WHERE fecha BETWEEN ? AND ?').all(inicio, fin).map((f) => f.fecha)
   )
-  let dias = 0
+  let habiles = 0
+  let enDescanso = 0
+  let enFestivo = 0
   const cursor = fecha(inicio)
   const limite = fecha(fin)
   while (cursor && limite && cursor <= limite) {
     const iso = aIso(cursor)
-    if (!descansos.includes(cursor.getDay()) && !festivos.has(iso)) dias += 1
+    if (descansos.includes(cursor.getDay())) enDescanso += 1
+    else if (festivos.has(iso)) enFestivo += 1
+    else habiles += 1
     cursor.setDate(cursor.getDate() + 1)
   }
-  return dias
+  return { habiles, enDescanso, enFestivo }
+}
+
+function diasHabiles(db, empleado, inicio, fin) {
+  return desgloseDias(db, empleado, inicio, fin).habiles
 }
 
 function saldoDe(db, empleado, alDia = hoy()) {
@@ -130,11 +140,15 @@ export function register(ipcMain, getDb) {
 
   ipcMain.handle('vacaciones:calcularDias', (event, { empleado_id, fecha_inicio, fecha_fin }) => {
     const db = getDb()
-    if (!fecha_inicio || !fecha_fin || fecha_fin < fecha_inicio) return { dias: 0, naturales: 0 }
+    const vacio = { dias: 0, naturales: 0, enDescanso: 0, enFestivo: 0 }
+    if (!fecha_inicio || !fecha_fin || fecha_fin < fecha_inicio) return vacio
     const empleado = db.prepare('SELECT * FROM empleados WHERE id = ?').get(empleado_id)
+    const desglose = desgloseDias(db, empleado, fecha_inicio, fecha_fin)
     return {
-      dias: diasHabiles(db, empleado, fecha_inicio, fecha_fin),
-      naturales: diasEntre(fecha_inicio, fecha_fin)
+      dias: desglose.habiles,
+      naturales: diasEntre(fecha_inicio, fecha_fin),
+      enDescanso: desglose.enDescanso,
+      enFestivo: desglose.enFestivo
     }
   })
 

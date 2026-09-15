@@ -89,6 +89,7 @@ const REPORTES = {
           Ajustes: saldo.ajustes,
           Tomados: saldo.tomados,
           Disponibles: saldo.disponibles,
+          'Disponibles + proporcional (finiquito)': saldo.porFiniquito,
           'Prescribe el': vencimientoPeriodo(e.fecha_ingreso, Math.max(1, saldo.anios)) || ''
         }
       })

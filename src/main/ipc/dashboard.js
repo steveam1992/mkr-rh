@@ -210,7 +210,12 @@ export function register(ipcMain, getDb) {
           `SELECT COALESCE(SUM(dias), 0) AS dias FROM vacaciones
            WHERE empleado_id = ? AND estatus IN ('aprobada','disfrutada')`
         ).get(e.id).dias
-        const disponibles = round2(derecho.total - tomados)
+        // Los ajustes manuales tambien cuentan: si no, la alerta reclama dias que ya se
+        // descontaron a mano y no cuadra con el saldo de la pantalla de Vacaciones.
+        const ajustes = db.prepare(
+          'SELECT COALESCE(SUM(dias), 0) AS dias FROM vacaciones_ajustes WHERE empleado_id = ?'
+        ).get(e.id).dias
+        const disponibles = round2(derecho.generados + ajustes - tomados)
         if (disponibles > 0) {
           alertas.push({
             tipo: 'vacaciones',

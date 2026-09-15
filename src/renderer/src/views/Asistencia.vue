@@ -195,11 +195,11 @@ const COLORES = {
   asistencia: '#00B894',
   retardo: '#E1A200',
   falta: '#E74C3C',
-  vacaciones: '#6C5CE7',
+  vacaciones: '#689A9E',
   incapacidad: '#0984E3',
-  permiso: '#A29BFE',
-  descanso: '#EAE7F6',
-  festivo: '#D8D3F2'
+  permiso: '#A9CBCD',
+  descanso: '#ECECEE',
+  festivo: '#D4D4D8'
 }
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -377,7 +377,7 @@ export default {
 
 .calendario td {
   padding: 3px 2px;
-  border-bottom: 1px solid #F3F1FA;
+  border-bottom: 1px solid #F4F4F5;
   text-align: center;
 }
 
@@ -399,6 +399,6 @@ export default {
   height: 17px;
   border-radius: 4px;
   margin: 0 auto;
-  border: 1px solid #F0EEFA;
+  border: 1px solid #F1F1F2;
 }
 </style>

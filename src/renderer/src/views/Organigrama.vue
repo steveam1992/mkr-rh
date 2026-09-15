@@ -111,7 +111,7 @@ export default {
 
 .nodo__tarjeta:hover {
   border-color: var(--primary);
-  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.16);
+  box-shadow: 0 4px 16px rgba(26, 26, 30, 0.16);
 }
 
 .nodo__avatar {

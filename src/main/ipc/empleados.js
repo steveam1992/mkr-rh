@@ -286,7 +286,8 @@ export function register(ipcMain, getDb) {
       tabla,
       diasAguinaldo: cfg.dias_aguinaldo,
       primaVacacional: cfg.prima_vacacional,
-      diasVacacionesPendientes: Math.max(0, saldo.disponibles),
+      // Al terminar la relacion si se paga el proporcional del anio en curso (art. 79 LFT).
+      diasVacacionesPendientes: Math.max(0, saldo.porFiniquito),
       diasSalariosPendientes: num(dias_salarios)
     })
 
