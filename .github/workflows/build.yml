@@ -37,7 +37,13 @@ jobs:
       - run: pnpm run package
         env:
           # Sin certificado de Apple: evita que electron-builder falle buscando uno.
+          # La firma ad-hoc la pone el hook build/adhoc-sign.js; sin ella macOS se
+          # niega a abrir la app en Apple Silicon (ver docs/INSTALACION-MACOS.md).
           CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Verificar que el .app quedo firmado
+        if: matrix.nombre == 'mac'
+        run: codesign --verify --deep --strict --verbose=2 dist/mac*/*.app
 
       - uses: actions/upload-artifact@v4
         with:

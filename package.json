@@ -65,6 +65,7 @@
     },
     "directories": {
       "output": "dist"
-    }
+    },
+    "afterPack": "build/adhoc-sign.js"
   }
 }
