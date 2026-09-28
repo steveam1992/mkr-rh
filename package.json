@@ -46,6 +46,7 @@
     },
     "mac": {
       "category": "public.app-category.business",
+      "artifactName": "${name}-${version}-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",

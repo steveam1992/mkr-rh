@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -41,9 +42,41 @@ jobs:
           # niega a abrir la app en Apple Silicon (ver docs/INSTALACION-MACOS.md).
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
+          # --- FIRMA REAL (solo cuando tengas cuenta de Apple Developer) ---
+          # Sustituye el bloque de arriba por este. Va limitado a macOS para que
+          # CSC_LINK no llegue al runner de Windows. Ver docs/FIRMA-APPLE.md.
+          # CSC_LINK: ${{ matrix.nombre == 'mac' && secrets.MAC_CSC_LINK || '' }}
+          # CSC_KEY_PASSWORD: ${{ matrix.nombre == 'mac' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
+          # APPLE_ID: ${{ matrix.nombre == 'mac' && secrets.APPLE_ID || '' }}
+          # APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.nombre == 'mac' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          # APPLE_TEAM_ID: ${{ matrix.nombre == 'mac' && secrets.APPLE_TEAM_ID || '' }}
+
       - name: Verificar que el .app quedo firmado
         if: matrix.nombre == 'mac'
         run: codesign --verify --deep --strict --verbose=2 dist/mac*/*.app
+
+      - name: Smoke test (la app debe arrancar)
+        if: matrix.nombre == 'mac'
+        run: |
+          "dist/mac-arm64/MKR RH.app/Contents/MacOS/MKR RH" > app.log 2>&1 &
+          PID=$!
+          sleep 10
+          if kill -0 $PID 2>/dev/null; then
+            echo "La app sigue viva"
+            kill $PID
+          else
+            echo "La app se cerró al arrancar"
+            cat app.log
+            exit 1
+          fi
+
+      - name: Subir log del smoke test si falla
+        if: failure() && matrix.nombre == 'mac'
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-log-mac
+          path: app.log
+          if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v4
         with:
