@@ -50,6 +50,8 @@ function prepararValores(db, data, { cfg, tabla }) {
   valores.salario_diario = diario
   valores.salario_mensual = mensual
   valores.salario_diario_integrado = sdi
+  valores.curp = oNulo(data.curp)?.toUpperCase() ?? null
+  valores.rfc = oNulo(data.rfc)?.toUpperCase() ?? null
   valores.nombre = limpiar(data.nombre)
   valores.apellido_paterno = limpiar(data.apellido_paterno)
   valores.fecha_ingreso = data.fecha_ingreso
@@ -67,6 +69,11 @@ function validar(data) {
   }
   if (num(data.salario_diario) <= 0 && num(data.salario_mensual) <= 0) {
     return 'Captura el salario diario o el mensual'
+  }
+  if (limpiar(data.curp).length > 18) return 'La CURP no puede pasar de 18 caracteres'
+  if (limpiar(data.rfc) && limpiar(data.rfc).length !== 13) return 'El RFC debe tener 13 caracteres'
+  if (limpiar(String(data.clabe ?? '')) && !/^\d{1,18}$/.test(limpiar(String(data.clabe)))) {
+    return 'La CLABE o cuenta solo admite números (máximo 18 dígitos)'
   }
   return null
 }
@@ -99,6 +106,36 @@ export function saldoDeVacaciones(db, empleado, alDia = hoy()) {
     ajustes: ajustesVacaciones(db, empleado.id),
     alDia
   })
+}
+
+// Alta de un empleado: la usan el formulario y la importacion desde el layout.
+export function insertarEmpleado(db, data) {
+  const error = validar(data)
+  if (error) return { ok: false, mensaje: error }
+
+  const valores = prepararValores(db, data, contexto(db))
+
+  if (valores.numero_empleado &&
+      db.prepare('SELECT id FROM empleados WHERE numero_empleado = ?').get(valores.numero_empleado)) {
+    return { ok: false, mensaje: 'Ya existe un empleado con ese número' }
+  }
+  if (!valores.numero_empleado) valores.numero_empleado = siguienteNumero(db)
+
+  const columnas = CAMPOS.join(', ')
+  const marcadores = CAMPOS.map(() => '?').join(', ')
+  const info = db.prepare(`INSERT INTO empleados (${columnas}) VALUES (${marcadores})`)
+    .run(...CAMPOS.map((c) => valores[c]))
+
+  registrarMovimiento(db, {
+    empleado_id: info.lastInsertRowid,
+    tipo: 'ingreso',
+    fecha: valores.fecha_ingreso,
+    nuevo: valores.salario_diario.toString(),
+    nota: 'Alta del empleado',
+    usuario_id: data.usuario_id
+  })
+
+  return { ok: true, id: Number(info.lastInsertRowid) }
 }
 
 export function register(ipcMain, getDb) {
@@ -172,36 +209,7 @@ export function register(ipcMain, getDb) {
     }
   })
 
-  ipcMain.handle('empleados:crear', (event, data) => {
-    const db = getDb()
-    const error = validar(data)
-    if (error) return { ok: false, mensaje: error }
-
-    const ctx = contexto(db)
-    const valores = prepararValores(db, data, ctx)
-
-    if (valores.numero_empleado &&
-        db.prepare('SELECT id FROM empleados WHERE numero_empleado = ?').get(valores.numero_empleado)) {
-      return { ok: false, mensaje: 'Ya existe un empleado con ese número' }
-    }
-    if (!valores.numero_empleado) valores.numero_empleado = siguienteNumero(db)
-
-    const columnas = CAMPOS.join(', ')
-    const marcadores = CAMPOS.map(() => '?').join(', ')
-    const info = db.prepare(`INSERT INTO empleados (${columnas}) VALUES (${marcadores})`)
-      .run(...CAMPOS.map((c) => valores[c]))
-
-    registrarMovimiento(db, {
-      empleado_id: info.lastInsertRowid,
-      tipo: 'ingreso',
-      fecha: valores.fecha_ingreso,
-      nuevo: valores.salario_diario.toString(),
-      nota: 'Alta del empleado',
-      usuario_id: data.usuario_id
-    })
-
-    return { ok: true, id: Number(info.lastInsertRowid) }
-  })
+  ipcMain.handle('empleados:crear', (event, data) => insertarEmpleado(getDb(), data))
 
   ipcMain.handle('empleados:actualizar', (event, { id, data }) => {
     const db = getDb()

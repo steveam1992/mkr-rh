@@ -12,7 +12,8 @@
           :key="s.clave"
           class="tab"
           :class="{ 'tab--activa': seccion === s.clave }"
-          @click="seccion = s.clave"
+          :disabled="!puedeIrA(s.clave)"
+          @click="irA(s.clave)"
         >
           {{ s.label }}
         </button>
@@ -81,11 +82,11 @@
           <div class="campos">
             <div class="campo">
               <label>CURP</label>
-              <input type="text" v-model="form.curp" maxlength="18" style="text-transform: uppercase" />
+              <input type="text" v-model="form.curp" maxlength="18" @input="form.curp = form.curp.toUpperCase()" />
             </div>
             <div class="campo">
               <label>RFC</label>
-              <input type="text" v-model="form.rfc" maxlength="13" style="text-transform: uppercase" />
+              <input type="text" v-model="form.rfc" maxlength="13" @input="form.rfc = form.rfc.toUpperCase()" />
             </div>
             <div class="campo">
               <label>NSS</label>
@@ -237,11 +238,25 @@
           <div class="campos">
             <div class="campo">
               <label>Salario diario *</label>
-              <input type="number" min="0" step="0.01" v-model.number="form.salario_diario" @input="form.salario_mensual = 0" />
+              <input
+                type="text"
+                inputmode="decimal"
+                v-model="form.salario_diario"
+                @keypress="soloDecimales"
+                @paste="pegarDecimales"
+                @input="form.salario_mensual = ''"
+              />
             </div>
             <div class="campo">
               <label>Salario mensual</label>
-              <input type="number" min="0" step="0.01" v-model.number="form.salario_mensual" @input="form.salario_diario = 0" />
+              <input
+                type="text"
+                inputmode="decimal"
+                v-model="form.salario_mensual"
+                @keypress="soloDecimales"
+                @paste="pegarDecimales"
+                @input="form.salario_diario = ''"
+              />
             </div>
           </div>
           <p class="muted">
@@ -252,11 +267,21 @@
           <div class="campos" style="margin-top: 14px">
             <div class="campo">
               <label>Banco</label>
-              <input type="text" v-model="form.banco" />
+              <select v-model="form.banco">
+                <option value="">Sin banco</option>
+                <option v-for="b in listaBancos" :key="b.nombre" :value="b.nombre">{{ b.nombre }}</option>
+              </select>
             </div>
             <div class="campo">
               <label>CLABE o cuenta</label>
-              <input type="text" v-model="form.clabe" maxlength="18" />
+              <input
+                type="text"
+                inputmode="numeric"
+                v-model="form.clabe"
+                maxlength="18"
+                @keypress="soloEnteros"
+                @paste="pegarEnteros"
+              />
             </div>
           </div>
 
@@ -271,7 +296,9 @@
 
       <div class="modal__acciones">
         <button class="btn-ghost" @click="$emit('cerrar')">Cancelar</button>
-        <button class="btn-primary" :disabled="guardando" @click="guardar">
+        <button class="btn-secondary" v-if="indiceSeccion > 0" @click="anterior">Anterior</button>
+        <button class="btn-primary" v-if="!esUltima" @click="siguiente">Siguiente</button>
+        <button class="btn-primary" v-else :disabled="guardando" @click="guardar">
           {{ guardando ? 'Guardando...' : 'Guardar' }}
         </button>
       </div>
@@ -282,6 +309,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import formats from '../mixin/formats'
+import inputs from '../mixin/inputs'
 
 const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
@@ -292,14 +320,14 @@ const VACIO = {
   direccion: '', ciudad: '', estado: '', cp: '',
   departamento_id: null, puesto_id: null, jefe_id: null,
   fecha_ingreso: '', tipo_contrato: 'indeterminado', fecha_fin_contrato: '',
-  salario_diario: 0, salario_mensual: 0,
+  salario_diario: '', salario_mensual: '',
   tipo_jornada: 'diurna', hora_entrada: '09:00', hora_salida: '18:00',
   banco: '', clabe: '', foto: null, notas: ''
 }
 
 export default {
   name: 'EmpleadoForm',
-  mixins: [formats],
+  mixins: [formats, inputs],
   props: {
     empleado: { type: Object, default: null },
     // Permite abrir el formulario directamente en la pestana que interesa.
@@ -319,6 +347,8 @@ export default {
       form: { ...VACIO },
       descansos: [0],
       posiblesJefes: [],
+      bancos: [],
+      maxAlcanzada: 0,
       numeroSugerido: '',
       error: '',
       guardando: false
@@ -335,6 +365,21 @@ export default {
     resumenLaborables() {
       return DIAS.filter((d, i) => !this.descansos.includes(i)).join(', ') || 'ninguno'
     },
+    indiceSeccion() {
+      return this.secciones.findIndex((s) => s.clave === this.seccion)
+    },
+    esUltima() {
+      // Al editar ya existe el empleado: se puede guardar desde cualquier pestana.
+      return this.esEdicion || this.indiceSeccion === this.secciones.length - 1
+    },
+    listaBancos() {
+      // Si el empleado trae un banco que ya no esta en el catalogo, se conserva.
+      const actual = this.form.banco
+      if (actual && !this.bancos.some((b) => b.nombre === actual)) {
+        return [{ nombre: actual }, ...this.bancos]
+      }
+      return this.bancos
+    },
     puestosDisponibles() {
       if (!this.form.departamento_id) return this.puestos
       return this.puestos.filter((p) => p.departamento_id === this.form.departamento_id)
@@ -343,6 +388,9 @@ export default {
   async mounted() {
     if (this.empleado) {
       this.form = { ...VACIO, ...this.empleado }
+      for (const c of ['salario_diario', 'salario_mensual']) {
+        this.form[c] = Number(this.form[c]) > 0 ? String(this.form[c]) : ''
+      }
       this.descansos = this.empleado.dias_descanso
         ? String(this.empleado.dias_descanso).split(',').map(Number)
         : [0]
@@ -350,6 +398,8 @@ export default {
       this.form.fecha_ingreso = this.hoyIso()
       this.numeroSugerido = await window.api.empleados.siguienteNumero()
     }
+
+    this.bancos = await window.api.catalogos.bancos()
 
     const lista = await window.api.empleados.listar({ estatus: 'activo' })
     this.posiblesJefes = lista.filter((e) => e.id !== this.empleado?.id)
@@ -360,13 +410,57 @@ export default {
       if (res.ok) this.form.foto = res.dataUrl
       else if (res.mensaje) this.error = res.mensaje
     },
+    // Al crear, las pestanas se recorren en orden: hay datos que dependen de los
+    // anteriores (departamento -> puesto, sueldo...), asi que no se salta adelante.
+    puedeIrA(clave) {
+      if (this.esEdicion) return true
+      const i = this.secciones.findIndex((s) => s.clave === clave)
+      return i <= this.maxAlcanzada
+    },
+    irA(clave) {
+      if (!this.puedeIrA(clave)) return
+      this.error = ''
+      this.seccion = clave
+    },
+    anterior() {
+      this.irA(this.secciones[this.indiceSeccion - 1].clave)
+    },
+    siguiente() {
+      const falta = this.validarSeccion()
+      if (falta) {
+        this.error = falta
+        return
+      }
+      this.error = ''
+      const i = this.indiceSeccion + 1
+      this.maxAlcanzada = Math.max(this.maxAlcanzada, i)
+      this.seccion = this.secciones[i].clave
+    },
+    validarSeccion() {
+      if (this.seccion === 'personales') {
+        if (!String(this.form.nombre || '').trim()) return 'Escribe el nombre del empleado'
+        if (!String(this.form.apellido_paterno || '').trim()) return 'Escribe el apellido paterno'
+        if (this.form.rfc && this.form.rfc.length !== 13) return 'El RFC debe tener 13 caracteres'
+      }
+      if (this.seccion === 'puesto') {
+        if (!this.form.fecha_ingreso) return 'Selecciona la fecha de ingreso'
+        if (this.form.tipo_contrato === 'determinado' && !this.form.fecha_fin_contrato) {
+          return 'Un contrato por tiempo determinado necesita fecha de término'
+        }
+      }
+      return ''
+    },
     async guardar() {
       this.error = ''
       this.guardando = true
       try {
         const data = {
           ...this.form,
+          curp: (this.form.curp || '').toUpperCase(),
+          rfc: (this.form.rfc || '').toUpperCase(),
           dias_descanso: this.descansos.sort().join(','),
+          salario_diario: Number(this.form.salario_diario) || 0,
+          salario_mensual: Number(this.form.salario_mensual) || 0,
           usuario_id: this.usuarioActual?.id
         }
         const res = this.esEdicion
@@ -390,6 +484,11 @@ export default {
 </script>
 
 <style scoped>
+.tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .cuerpo {
   padding-top: 16px;
   min-height: 300px;

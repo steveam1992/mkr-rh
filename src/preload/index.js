@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld('bridge', {
     abrirCarpetaDatos: invoke('config:abrirCarpetaDatos')
   },
   catalogos: {
+    bancos: invoke('catalogos:bancos'),
     departamentos: invoke('catalogos:departamentos'),
     crearDepartamento: invoke('catalogos:crearDepartamento'),
     actualizarDepartamento: invoke('catalogos:actualizarDepartamento'),
@@ -64,7 +65,9 @@ contextBridge.exposeInMainWorld('bridge', {
     movimientos: invoke('empleados:movimientos'),
     organigrama: invoke('empleados:organigrama'),
     seleccionarFoto: invoke('empleados:seleccionarFoto'),
-    siguienteNumero: invoke('empleados:siguienteNumero')
+    siguienteNumero: invoke('empleados:siguienteNumero'),
+    descargarLayout: invoke('empleados:descargarLayout'),
+    importar: invoke('empleados:importar')
   },
   documentos: {
     listar: invoke('documentos:listar'),

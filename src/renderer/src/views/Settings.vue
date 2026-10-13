@@ -324,7 +324,6 @@
           <ul class="lista-datos">
             <li><span>Sistema</span><b>MKR RH</b></li>
             <li><span>Empresa configurada</span><b>{{ empresa?.nombre_empresa }}</b></li>
-            <li><span>Base de datos</span><b>SQLite local</b></li>
           </ul>
           <p class="muted" style="margin-top: 12px">
             Todos los datos viven en esta computadora. Restaurar un respaldo reemplaza

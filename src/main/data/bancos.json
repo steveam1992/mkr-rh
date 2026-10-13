@@ -1,0 +1,707 @@
+[
+  {
+    "codigo": "138",
+    "nombre": "ABC CAPITAL",
+    "nombre_completo": "ABC Capital, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "614",
+    "nombre": "ACCIVAL",
+    "nombre_completo": "Acciones y Valores Banamex, S.A. de C.V., Casa de Bolsa"
+  },
+  {
+    "codigo": "133",
+    "nombre": "ACTINVER",
+    "nombre_completo": "Banco Actinver, S.A. Institución de Banca Múltiple, Grupo Financiero Actinver"
+  },
+  {
+    "codigo": "62",
+    "nombre": "AFIRME",
+    "nombre_completo": "Banca Afirme, S.A., Institución de Banca Múltiple, Afirme Grupo Financiero"
+  },
+  {
+    "codigo": "638",
+    "nombre": "AKALA",
+    "nombre_completo": "Akala, S.A. de C.V., Sociedad Financiera Popular"
+  },
+  {
+    "codigo": "721",
+    "nombre": "ALBO",
+    "nombre_completo": "Inteligencia Financiera S.A.P.I de C.V. Banco"
+  },
+  {
+    "codigo": "661",
+    "nombre": "ALTERNATIVOS",
+    "nombre_completo": "No se encontro"
+  },
+  {
+    "codigo": "660",
+    "nombre": "ALTOR",
+    "nombre_completo": "ALTOR CASA DE BOLSA, S.A. DE C.V."
+  },
+  {
+    "codigo": "103",
+    "nombre": "AMERICAN EXPRESS",
+    "nombre_completo": "American Express Bank (México), S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "706",
+    "nombre": "ARCUS",
+    "nombre_completo": "Arcus Financial Intelligence, Inc."
+  },
+  {
+    "codigo": "652",
+    "nombre": "ASEA",
+    "nombre_completo": "Solución Asea, S.A. de C.V., Sociedad Financiera Popular"
+  },
+  {
+    "codigo": "659",
+    "nombre": "ASP INTEGRA OPC",
+    "nombre_completo": "Opciones Empresariales del Noreste, S.A. de C.V. S.F.P."
+  },
+  {
+    "codigo": "128",
+    "nombre": "AUTOFIN",
+    "nombre_completo": "Banco Autofin México, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "127",
+    "nombre": "AZTECA",
+    "nombre_completo": "Banco Azteca, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "610",
+    "nombre": "B&B",
+    "nombre_completo": "B y B, Casa de Cambio, S.A. de C.V."
+  },
+  {
+    "codigo": "166",
+    "nombre": "BaBien",
+    "nombre_completo": "Banco del Bienestar"
+  },
+  {
+    "codigo": "30",
+    "nombre": "BAJÍO",
+    "nombre_completo": "Banco del Bajío, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "106",
+    "nombre": "BAMSA",
+    "nombre_completo": "Bank of America México, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "2",
+    "nombre": "BANAMEX",
+    "nombre_completo": "Banco Nacional de México, S.A., Integrante del Grupo Financiero Banamex"
+  },
+  {
+    "codigo": "131",
+    "nombre": "BANCO FAMSA",
+    "nombre_completo": "Banco Ahorro Famsa, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "132",
+    "nombre": "BANCO MULTIVA",
+    "nombre_completo": "Banco Multiva, S.A., Institución de Banca Múltiple, Grupo Financiero Multiva"
+  },
+  {
+    "codigo": "160",
+    "nombre": "BANCO S3",
+    "nombre_completo": "Banco S3 CACEIS México, S. A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "6",
+    "nombre": "BANCOMEXT",
+    "nombre_completo": "Banco Nacional de Comercio Exterior, Sociedad Nacional de Crédito, Institución de Banca de Desarrollo"
+  },
+  {
+    "codigo": "137",
+    "nombre": "BANCOPPEL",
+    "nombre_completo": "BanCoppel, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "152",
+    "nombre": "BANCREA",
+    "nombre_completo": "Banco Bancrea, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "19",
+    "nombre": "BANJERCITO",
+    "nombre_completo": "Banco Nacional del Ejército, Fuerza Aérea y Armada, Sociedad Nacional de Crédito, Institución de Banca de Desarrollo"
+  },
+  {
+    "codigo": "106",
+    "nombre": "BANK OF AMERICA",
+    "nombre_completo": "Bank of America México, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "159",
+    "nombre": "BANK OF CHINA",
+    "nombre_completo": "Bank of China México, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "147",
+    "nombre": "BANKAOOL",
+    "nombre_completo": "Bankaool, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "9",
+    "nombre": "BANOBRAS",
+    "nombre_completo": "Banco Nacional de Obras y Servicios Públicos, Sociedad Nacional de Crédito, Institución de Banca de Desarrollo"
+  },
+  {
+    "codigo": "72",
+    "nombre": "BANORTE/IXE",
+    "nombre_completo": "Banco Mercantil del Norte, S.A., Institución de Banca Múltiple, Grupo Financiero Banorte"
+  },
+  {
+    "codigo": "58",
+    "nombre": "BANREGIO",
+    "nombre_completo": "Banco Regional de Monterrey, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "166",
+    "nombre": "BANSEFI",
+    "nombre_completo": "Banco del Ahorro Nacional y Servicios Financieros, Sociedad Nacional de Crédito, Institución de Banca de Desarrollo"
+  },
+  {
+    "codigo": "60",
+    "nombre": "BANSI",
+    "nombre_completo": "Bansi, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "OO1",
+    "nombre": "Banxico",
+    "nombre_completo": "Banco de México"
+  },
+  {
+    "codigo": "129",
+    "nombre": "BARCLAYS",
+    "nombre_completo": "Barclays Bank México, S.A., Institución de Banca Multiple, Grupo Financiero Barclays México"
+  },
+  {
+    "codigo": "145",
+    "nombre": "BBASE",
+    "nombre_completo": "Banco Base, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "12",
+    "nombre": "BBVA BANCOMER",
+    "nombre_completo": "BBVA Bancomer, S.A., Institución de Banca Múltiple, Grupo Financiero BBVA Bancomer"
+  },
+  {
+    "codigo": "146",
+    "nombre": "BICENTENARIO",
+    "nombre_completo": "Banco Bicentenario, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "133",
+    "nombre": "BM ACTINVER",
+    "nombre_completo": "Banco Actinver, S.A., Institución de Banca Múltiple, Grupo Financiero Actinver"
+  },
+  {
+    "codigo": "145",
+    "nombre": "BM BASE",
+    "nombre_completo": "Banco Base, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "112",
+    "nombre": "BMONEX",
+    "nombre_completo": "Banco Monex, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "132",
+    "nombre": "BMULTIVA",
+    "nombre_completo": "Banco Multiva, S.A., Institución de Banca Múltiple, Multivalores Grupo Financiero"
+  },
+  {
+    "codigo": "632",
+    "nombre": "BULLTICK",
+    "nombre_completo": "CB Bulltick Casa de Bolsa, S.A., de C.V."
+  },
+  {
+    "codigo": "677",
+    "nombre": "CAJA POP MEXICA",
+    "nombre_completo": "CAJA POPULAR MEXICANA, S.C. DE A.P. DE R.L. DE C.V."
+  },
+  {
+    "codigo": "683",
+    "nombre": "CAJA TELEFONISTAS",
+    "nombre_completo": "CAJA DE AHORRO DE LOS TELEFONISTAS, S.C. DE A.P. DE R.L. DE C.V."
+  },
+  {
+    "codigo": "621",
+    "nombre": "CB ACTINVER",
+    "nombre_completo": "Actinver Casa de Bolsa, S.A. de C.V."
+  },
+  {
+    "codigo": "630",
+    "nombre": "CB INTERCAM",
+    "nombre_completo": "Intercam Casa de Bolsa, S.A. de C.V."
+  },
+  {
+    "codigo": "640",
+    "nombre": "CB JPMORGAN",
+    "nombre_completo": "J.P. Morgan Casa de Bolsa, S.A. de C.V. J.P. Morgan Grupo Financiero"
+  },
+  {
+    "codigo": "626",
+    "nombre": "CBDEUTSCHE",
+    "nombre_completo": "Deutsche Securities, S.A. de C.V. CASA DE BOLSA"
+  },
+  {
+    "codigo": "153",
+    "nombre": "CHIHUAHUA",
+    "nombre_completo": "Banco Progreso Chihuahua, S.A."
+  },
+  {
+    "codigo": "631",
+    "nombre": "CI BOLSA",
+    "nombre_completo": "CI Casa de Bolsa, S.A. de C.V."
+  },
+  {
+    "codigo": "143",
+    "nombre": "CIBANCO",
+    "nombre_completo": "CIBanco, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "901",
+    "nombre": "CLS",
+    "nombre_completo": "Cls Bank International"
+  },
+  {
+    "codigo": "903",
+    "nombre": "CoDi Valida",
+    "nombre_completo": "CoDi Valida"
+  },
+  {
+    "codigo": "130",
+    "nombre": "COMPARTAMOS",
+    "nombre_completo": "Banco Compartamos, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "140",
+    "nombre": "CONSUBANCO",
+    "nombre_completo": "Consubanco, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "652",
+    "nombre": "CREDICAPITAL",
+    "nombre_completo": "Solucion Asea, S. A. de C.V. Sociedad Financiera Popular"
+  },
+  {
+    "codigo": "126",
+    "nombre": "CREDIT",
+    "nombre_completo": "SUISSE Banco Credit Suisse (México), S.A. Institución de Banca Múltiple, Grupo Financiero Credit Suisse (México)"
+  },
+  {
+    "codigo": "126",
+    "nombre": "Credit Suisse First Boston",
+    "nombre_completo": "Banco Credit Suisse (México), S.A., Institución de Banca Múltiple, Grupo Financiero Credit Suisse (México)"
+  },
+  {
+    "codigo": "680",
+    "nombre": "CRISTOBAL COLON",
+    "nombre_completo": "Caja Popular Cristóbal Colón S.C. de A.P. de R.L. de C.V"
+  },
+  {
+    "codigo": "723",
+    "nombre": "CUENCA",
+    "nombre_completo": "Cuenca Tecnología Financiera, S.A. de C.V."
+  },
+  {
+    "codigo": "124",
+    "nombre": "DEUTSCHE",
+    "nombre_completo": "Deutsche Bank México, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "151",
+    "nombre": "DONDÉ",
+    "nombre_completo": "Fundación Dondé Banco, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "606",
+    "nombre": "ESTRUCTURADORES",
+    "nombre_completo": "Estructuradores del Mercado de Valores Casa de Bolsa, S.A. de C.V."
+  },
+  {
+    "codigo": "648",
+    "nombre": "EVERCORE",
+    "nombre_completo": "Evercore Casa de Bolsa, S.A. de C.V."
+  },
+  {
+    "codigo": "616",
+    "nombre": "FINAMEX",
+    "nombre_completo": "Casa de Bolsa Finamex, S.A. de C.V."
+  },
+  {
+    "codigo": "634",
+    "nombre": "FINCOMUN",
+    "nombre_completo": "Fincomún, Servicios Financieros Comunitarios, S.A. de C.V."
+  },
+  {
+    "codigo": "154",
+    "nombre": "FINTERRA",
+    "nombre_completo": "Banco Finterra, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "738",
+    "nombre": "FINTOC",
+    "nombre_completo": "Fintoc, S.A. DE C.V., Institución de Fondos de Pago Electrónico"
+  },
+  {
+    "codigo": "689",
+    "nombre": "FOMPED",
+    "nombre_completo": "Fondo Mexicano del Petróleo"
+  },
+  {
+    "codigo": "699",
+    "nombre": "FONDEADORA",
+    "nombre_completo": "Apoyo Múltiple, S.A. de C.V., S.F.P.,"
+  },
+  {
+    "codigo": "685",
+    "nombre": "FONDO (FIRA)",
+    "nombre_completo": "Fideicomisos Instituidos en Relación con la Agricultura"
+  },
+  {
+    "codigo": "149",
+    "nombre": "FORJADORES",
+    "nombre_completo": "Banco Forjadores, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "601",
+    "nombre": "GBM",
+    "nombre_completo": "GBM Grupo Bursátil Mexicano, S.A. de C.V. Casa de Bolsa"
+  },
+  {
+    "codigo": "636",
+    "nombre": "HDI SEGUROS",
+    "nombre_completo": "HDI Seguros, S.A. de C.V."
+  },
+  {
+    "codigo": "168",
+    "nombre": "HIPOTECARIA FEDERAL",
+    "nombre_completo": "Sociedad Hipotecaria Federal, Sociedad Nacional de Crédito, Institución de Banca de Desarrollo"
+  },
+  {
+    "codigo": "21",
+    "nombre": "HSBC",
+    "nombre_completo": "HSBC México, S.A., Institución de Banca Múltiple, Grupo Financiero HSBC"
+  },
+  {
+    "codigo": "36",
+    "nombre": "INBURSA",
+    "nombre_completo": "Banco Inbursa, S.A., Institución de Banca Múltiple, Grupo Financiero Inbursa"
+  },
+  {
+    "codigo": "902",
+    "nombre": "INDEVAL",
+    "nombre_completo": "SD. Indeval, S.A. de C.V."
+  },
+  {
+    "codigo": "116",
+    "nombre": "ING",
+    "nombre_completo": "ING Bank (México), S.A., Institución de Banca Múltiple, ING Grupo Financiero"
+  },
+  {
+    "codigo": "150",
+    "nombre": "INMOBILIARIO",
+    "nombre_completo": "Banco Inmobiliario Mexicano, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "37",
+    "nombre": "INTERACCIONES",
+    "nombre_completo": "Banco Interacciones, S.A., Institución de Banca Múltiple, Grupo Financiero Interacciones"
+  },
+  {
+    "codigo": "136",
+    "nombre": "INTERBANCO",
+    "nombre_completo": "Inter Banco, S.A. Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "136",
+    "nombre": "INTERCAM BANCO",
+    "nombre_completo": "Intercam Banco, S.A., Institución de Banca Múltiple, Intercam Grupo Financiero"
+  },
+  {
+    "codigo": "686",
+    "nombre": "INVERCAP",
+    "nombre_completo": "Afore InverCap S.A. de C.V."
+  },
+  {
+    "codigo": "102",
+    "nombre": "INVESTA BANK",
+    "nombre_completo": "Investa Bank, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "59",
+    "nombre": "INVEX",
+    "nombre_completo": "Banco Invex, S.A., Institución de Banca Múltiple, Invex Grupo Financiero"
+  },
+  {
+    "codigo": "110",
+    "nombre": "JP MORGAN",
+    "nombre_completo": "Banco JP Morgan, S.A., Institución de Banca Múltiple, JP Morgan Grupo Financiero (CHASE)"
+  },
+  {
+    "codigo": "653",
+    "nombre": "KUSPIT",
+    "nombre_completo": "Kuspit Casa de Bolsa, S.A. de C.V."
+  },
+  {
+    "codigo": "670",
+    "nombre": "LIBERTAD",
+    "nombre_completo": "Libertad Servicios Financieros, S.A. De C.V."
+  },
+  {
+    "codigo": "619",
+    "nombre": "MAPFRE",
+    "nombre_completo": "MAPFRE Tepeyac, S.A."
+  },
+  {
+    "codigo": "602",
+    "nombre": "MASARI",
+    "nombre_completo": "Masari Casa de Bolsa, S.A."
+  },
+  {
+    "codigo": "722",
+    "nombre": "Mercado Pago W",
+    "nombre_completo": "MercadoLibre S. de R.L. de C.V"
+  },
+  {
+    "codigo": "615",
+    "nombre": "MERRILL",
+    "nombre_completo": "LYNCH Merrill Lynch México, S.A. de C.V. Casa de Bolsa"
+  },
+  {
+    "codigo": "42",
+    "nombre": "MIFEL",
+    "nombre_completo": "Banca Mifel, S.A., Institución de Banca Múltiple, Grupo Financiero Mifel"
+  },
+  {
+    "codigo": "158",
+    "nombre": "MIZUHO BANK",
+    "nombre_completo": "Mizuho Bank México, S.A. Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "112",
+    "nombre": "MONEX",
+    "nombre_completo": "Banco Monex, S.A., Institución de Banca Múltiple, Monex Grupo Financiero"
+  },
+  {
+    "codigo": "600",
+    "nombre": "MONEXCB",
+    "nombre_completo": "Monex Casa de Bolsa, S.A. de C.V. Monex Grupo Financiero"
+  },
+  {
+    "codigo": "108",
+    "nombre": "MUFG",
+    "nombre_completo": "MUFG Bank México, S.A., Institución de Banca Múltiple Filial"
+  },
+  {
+    "codigo": "132",
+    "nombre": "MULTIVA BANCO",
+    "nombre_completo": "Banco Multiva, S. A., Institución de Banca Múltiple, Grupo Financiero Multiva"
+  },
+  {
+    "codigo": "999",
+    "nombre": "N/A",
+    "nombre_completo": ""
+  },
+  {
+    "codigo": "135",
+    "nombre": "NAFIN",
+    "nombre_completo": "Nacional Financiera, Sociedad Nacional de Crédito, Institución de Banca de Desarrollo"
+  },
+  {
+    "codigo": "638",
+    "nombre": "NUBANK",
+    "nombre_completo": "NUBANK, S.A., INSTITUCIÓN DE BANCA MÚLTIPLE"
+  },
+  {
+    "codigo": "710",
+    "nombre": "NVIO",
+    "nombre_completo": "NVIO PAGOS MÉXICO, S.A.P.I. DE C.V., INSTITUCIÓN DE FONDOS DE PAGO ELECTRÓNICO"
+  },
+  {
+    "codigo": "622",
+    "nombre": "OACTIN",
+    "nombre_completo": "OPERADORA ACTINVER, S.A. DE C.V."
+  },
+  {
+    "codigo": "659",
+    "nombre": "OPCIONES EMPRESARIALES DEL NOROESTE",
+    "nombre_completo": "OPCIONES EMPRESARIALES DEL NORESTE, S.A. DE C.V., S.F.P."
+  },
+  {
+    "codigo": "637",
+    "nombre": "ORDER",
+    "nombre_completo": "Order Express Casa de Cambio, S.A. de C.V"
+  },
+  {
+    "codigo": "148",
+    "nombre": "PAGATODO",
+    "nombre_completo": "Banco Pagatodo, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "620",
+    "nombre": "PROFUTURO",
+    "nombre_completo": "Profuturo G.N.P., S.A. de C.V., Afore"
+  },
+  {
+    "codigo": "642",
+    "nombre": "REFORMA",
+    "nombre_completo": "Operadora de Recursos Reforma, S.A. de C.V., S.F.P."
+  },
+  {
+    "codigo": "170",
+    "nombre": "REVOLUT BANK",
+    "nombre_completo": "REVOLUT BANK, S.A., INSTITUCIÓN DE BANCA MÚLTIPLE"
+  },
+  {
+    "codigo": "156",
+    "nombre": "SABADELL",
+    "nombre_completo": "BANCO DE SABADELL, S.A."
+  },
+  {
+    "codigo": "14",
+    "nombre": "SANTANDER",
+    "nombre_completo": "Banco Santander (México), S.A., Institución de Banca Múltiple, Grupo Financiero Santander"
+  },
+  {
+    "codigo": "44",
+    "nombre": "SCOTIABANK INVERLAT",
+    "nombre_completo": "Scotiabank Inverlat, S.A., Institución de Banca Múltiple, Grupo Financiero Scotiabank Inverlat"
+  },
+  {
+    "codigo": "651",
+    "nombre": "SEGMTY",
+    "nombre_completo": "Seguros Monterrey New York Life, S.A de C.V"
+  },
+  {
+    "codigo": "157",
+    "nombre": "SHINHAN",
+    "nombre_completo": "BANCO SHINHAN DE MEXICO, S.A., INSTITUCION DE BANCA MULTIPLE"
+  },
+  {
+    "codigo": "623",
+    "nombre": "SKANDIA",
+    "nombre_completo": "Skandia Vida, S.A. de C.V."
+  },
+  {
+    "codigo": "655",
+    "nombre": "SOFIEXPRESS",
+    "nombre_completo": "J.P. SOFIEXPRESS, S.A. de C.V., S.F.P."
+  },
+  {
+    "codigo": "728",
+    "nombre": "Spin",
+    "nombre_completo": "Spin by Oxxo"
+  },
+  {
+    "codigo": "633",
+    "nombre": "STERLING",
+    "nombre_completo": "Sterling Casa de Cambio, S.A. de C.V."
+  },
+  {
+    "codigo": "646",
+    "nombre": "STP",
+    "nombre_completo": "Sistema de Transferencias y Pagos STP"
+  },
+  {
+    "codigo": "629",
+    "nombre": "SU CASITA",
+    "nombre_completo": "Hipotecaria Su Casita, S.A. de C.V. SOFOM ENR"
+  },
+  {
+    "codigo": "647",
+    "nombre": "TELECOMM",
+    "nombre_completo": "Telecomunicaciones de México"
+  },
+  {
+    "codigo": "703",
+    "nombre": "TESORED",
+    "nombre_completo": "TESORED SA DE CV"
+  },
+  {
+    "codigo": "102",
+    "nombre": "THE ROYAL BANK",
+    "nombre_completo": "The Royal Bank of Scotland México, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "607",
+    "nombre": "TIBER",
+    "nombre_completo": "Casa de Cambio Tiber, S.A. de C.V."
+  },
+  {
+    "codigo": "108",
+    "nombre": "TOKYO",
+    "nombre_completo": "Bank of Tokyo-Mitsubishi UFJ (México), S.A. Institución de Banca Múltiple Filial"
+  },
+  {
+    "codigo": "684",
+    "nombre": "TRANSFER",
+    "nombre_completo": "No se encontro"
+  },
+  {
+    "codigo": "139",
+    "nombre": "UBS BANK",
+    "nombre_completo": "UBS Bank México, S.A., Institución de Banca Múltiple, UBS Grupo Financiero"
+  },
+  {
+    "codigo": "656",
+    "nombre": "UNAGRA",
+    "nombre_completo": "UNAGRA, S.A. de C.V., S.F.P."
+  },
+  {
+    "codigo": "618",
+    "nombre": "UNICA",
+    "nombre_completo": "Unica Casa de Cambio, S.A. de C.V."
+  },
+  {
+    "codigo": "617",
+    "nombre": "VALMEX",
+    "nombre_completo": "Valores Mexicanos Casa de Bolsa, S.A. de C.V."
+  },
+  {
+    "codigo": "605",
+    "nombre": "VALUE",
+    "nombre_completo": "Value, S.A. de C.V. Casa de Bolsa"
+  },
+  {
+    "codigo": "113",
+    "nombre": "VE POR MAS",
+    "nombre_completo": "Banco Ve Por Mas, S.A. Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "113",
+    "nombre": "VE POR MÁS",
+    "nombre_completo": "Banco Ve por Más, S.A., Institución de Banca Múltiple, Grupo Financiero Ve por Más"
+  },
+  {
+    "codigo": "608",
+    "nombre": "VECTOR",
+    "nombre_completo": "Vector Casa de Bolsa, S.A. de C.V."
+  },
+  {
+    "codigo": "141",
+    "nombre": "VOLKSWAGEN",
+    "nombre_completo": "Volkswagen Bank, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "134",
+    "nombre": "WAL-MART",
+    "nombre_completo": "Banco Wal-Mart de México Adelante, S.A., Institución de Banca Múltiple"
+  },
+  {
+    "codigo": "627",
+    "nombre": "ZURICH",
+    "nombre_completo": "Zurich Compañía de Seguros, S.A."
+  },
+  {
+    "codigo": "628",
+    "nombre": "ZURICHVI",
+    "nombre_completo": "Zurich Vida, Compañía de Seguros, S.A."
+  }
+]

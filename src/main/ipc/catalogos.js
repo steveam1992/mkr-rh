@@ -1,6 +1,11 @@
 import { limpiar, oNulo, num } from '../utils'
+import bancos from '../data/bancos.json'
 
 export function register(ipcMain, getDb) {
+  // --- Bancos (catalogo fijo, viene de data/bancos.json) ---
+
+  ipcMain.handle('catalogos:bancos', () => bancos)
+
   // --- Departamentos ---
 
   ipcMain.handle('catalogos:departamentos', (event, { incluirInactivos } = {}) => {

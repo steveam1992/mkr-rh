@@ -6,6 +6,10 @@
         <div class="page__subtitle">{{ empleados.length }} registro(s) · {{ etiquetaEstatus }}</div>
       </div>
       <div class="page__acciones">
+        <button class="btn-secondary" @click="descargarLayout">Descargar layout</button>
+        <button class="btn-secondary" :disabled="importando" @click="importar">
+          {{ importando ? 'Importando...' : 'Importar empleados' }}
+        </button>
         <button class="btn-primary" @click="abrirNuevo">+ Nuevo empleado</button>
       </div>
     </div>
@@ -79,6 +83,24 @@
       </table>
     </div>
 
+    <div class="modal-backdrop" v-if="resultadoImport" @click.self="resultadoImport = null">
+      <div class="modal modal--ancho">
+        <div class="modal__titulo">Resultado de la importación</div>
+        <div class="modal__sub">
+          {{ resultadoImport.creados }} empleado(s) importado(s) ·
+          {{ resultadoImport.errores.length }} fila(s) con errores (no se importaron)
+        </div>
+        <div class="errores" v-if="resultadoImport.errores.length">
+          <p v-for="e in resultadoImport.errores" :key="e.fila">
+            <b>Fila {{ e.fila }}:</b> {{ e.mensaje }}
+          </p>
+        </div>
+        <div class="modal__acciones">
+          <button class="btn-primary" @click="resultadoImport = null">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
     <EmpleadoForm v-if="mostrarForm" @cerrar="mostrarForm = false" @guardado="alGuardar" />
   </div>
 </template>
@@ -106,11 +128,13 @@ export default {
       empleados: [],
       filtros: { q: '', departamento_id: null, puesto_id: null, estatus: 'activo' },
       mostrarForm: false,
+      importando: false,
+      resultadoImport: null,
       temporizador: null
     }
   },
   computed: {
-    ...mapGetters(['departamentos', 'puestos']),
+    ...mapGetters(['departamentos', 'puestos', 'usuarioActual']),
     etiquetaEstatus() {
       return { activo: 'activos', baja: 'dados de baja', todos: 'todos' }[this.filtros.estatus]
     }
@@ -125,6 +149,26 @@ export default {
     cargarDebounce() {
       clearTimeout(this.temporizador)
       this.temporizador = setTimeout(this.cargar, 220)
+    },
+    async descargarLayout() {
+      const res = await window.api.empleados.descargarLayout()
+      if (res.ok) this.$store.dispatch('notificar', { mensaje: 'Layout guardado' })
+      else if (!res.canceled) this.$store.dispatch('notificar', { mensaje: res.mensaje, tipo: 'error' })
+    },
+    async importar() {
+      this.importando = true
+      try {
+        const res = await window.api.empleados.importar({ usuario_id: this.usuarioActual?.id })
+        if (res.canceled) return
+        if (!res.ok) {
+          this.$store.dispatch('notificar', { mensaje: res.mensaje, tipo: 'error' })
+          return
+        }
+        this.resultadoImport = res
+        await this.cargar()
+      } finally {
+        this.importando = false
+      }
     },
     abrirNuevo() {
       this.mostrarForm = true
@@ -147,6 +191,18 @@ export default {
 </script>
 
 <style scoped>
+.errores {
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.errores p {
+  margin: 0 0 6px;
+  color: var(--red);
+}
+
 .persona {
   display: flex;
   align-items: center;
