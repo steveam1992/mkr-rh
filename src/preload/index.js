@@ -5,8 +5,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openUrl: (url) => shell.openExternal(url),
   closeWindow: () => ipcRenderer.send('window:close'),
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
-  maximizeWindow: () => ipcRenderer.send('window:maximize')
+  maximizeWindow: () => ipcRenderer.send('window:maximize'),
+  // Eventos en vivo del proceso principal; cada suscripcion devuelve la funcion para soltarse.
+  onSyncCambios: (fn) => escuchar('sync:cambios', fn),
+  onMarcaje: (fn) => escuchar('rt:evento', fn),
+  onEstadoVivo: (fn) => escuchar('rt:estado', fn)
 })
+
+function escuchar(canal, fn) {
+  const oyente = (_event, datos) => fn(datos)
+  ipcRenderer.on(canal, oyente)
+  return () => ipcRenderer.removeListener(canal, oyente)
+}
 
 const invoke = (channel) => (payload) => ipcRenderer.invoke(channel, payload)
 
@@ -117,6 +127,17 @@ contextBridge.exposeInMainWorld('bridge', {
     resolver: invoke('permisos:resolver'),
     eliminar: invoke('permisos:eliminar'),
     enCurso: invoke('permisos:enCurso')
+  },
+  sync: {
+    estado: invoke('sync:estado'),
+    conectar: invoke('sync:conectar'),
+    ahora: invoke('sync:ahora'),
+    reenviarTodo: invoke('sync:reenviarTodo'),
+    desconectar: invoke('sync:desconectar'),
+    avisos: invoke('sync:avisos'),
+    marcarAvisosVistos: invoke('sync:marcarAvisosVistos'),
+    pinEmpleado: invoke('sync:pinEmpleado'),
+    establecerPin: invoke('sync:establecerPin')
   },
   asistencia: {
     dia: invoke('asistencia:dia'),

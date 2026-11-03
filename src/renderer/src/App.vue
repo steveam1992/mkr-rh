@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import AppSidebar from './components/AppSidebar.vue'
 import WindowControls from './components/WindowControls.vue'
@@ -29,10 +29,25 @@ import Notificacion from './components/Notificacion.vue'
 const store = useStore()
 const isAuthenticated = computed(() => store.getters.isAuthenticated)
 
+let soltar = []
 onMounted(() => {
   store.dispatch('cargarEmpresa')
   store.dispatch('cargarTablaVacaciones')
+
+  // Una marca desde la web (o desde otra computadora de RH) se avisa en cualquier pantalla.
+  soltar = [
+    window.electronAPI.onMarcaje((e) => {
+      if (e.tipo !== 'asistencia' || !['entrada', 'salida'].includes(e.accion)) return
+      const retardo = e.retardo > 0 ? ` (retardo de ${e.retardo} min)` : ''
+      store.dispatch('notificar', {
+        mensaje: `${e.nombre} marcó ${e.accion} a las ${e.hora_marcada}${retardo}`,
+        tipo: e.retardo > 0 ? 'info' : 'exito',
+        duracion: 5000
+      })
+    })
+  ]
 })
+onBeforeUnmount(() => soltar.forEach((f) => f()))
 </script>
 
 <style scoped>
