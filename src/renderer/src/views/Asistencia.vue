@@ -239,6 +239,16 @@ export default {
     this.rango.desde = `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-01`
     this.rango.hasta = this.hoyIso()
     this.cargarDia()
+    // Lo que baja del servidor (marcas de la web) se refleja sin que RH tenga que recargar.
+    this.soltarSync = window.electronAPI.onSyncCambios((r) => {
+      if (!r?.bajados) return
+      this.cargarDia()
+      if (this.tab === 'calendario') this.cargarCalendario()
+      if (this.tab === 'resumen') this.cargarResumen()
+    })
+  },
+  beforeUnmount() {
+    this.soltarSync?.()
   },
   methods: {
     async cargarDia() {

@@ -472,7 +472,12 @@ export default {
           return
         }
         this.$store.dispatch('notificar', {
-          mensaje: this.esEdicion ? 'Empleado actualizado' : 'Empleado dado de alta'
+          mensaje: this.esEdicion
+            ? 'Empleado actualizado'
+            : res.pin
+              ? `Empleado dado de alta. PIN de marcaje web: ${res.pin}. Entrégaselo ahora, no se vuelve a mostrar.`
+              : 'Empleado dado de alta',
+          duracion: res.pin ? 9000 : undefined
         })
         this.$emit('guardado', res.id || this.empleado.id)
       } finally {

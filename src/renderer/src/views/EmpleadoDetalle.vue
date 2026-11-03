@@ -113,6 +113,23 @@
           </ul>
         </section>
 
+        <section class="card">
+          <div class="card__titulo">PIN de marcaje por web</div>
+          <p class="muted">
+            Con su número de empleado ({{ empleado.numero_empleado }}) y un PIN de 4 a 8 dígitos marca
+            entrada y salida en la web. El PIN no se puede consultar después: solo se guarda su huella.
+          </p>
+          <ul class="lista-datos">
+            <li><span>Estado</span><b>{{ pin.activo ? 'Activo' : 'Sin PIN' }}</b></li>
+          </ul>
+          <div v-if="pin.editando">
+            <input type="text" v-model="pin.nuevo" maxlength="8" inputmode="numeric" style="width: 110px" />
+            <button class="btn-secondary btn-sm" @click="guardarPin">Guardar</button>
+            <button class="btn-ghost btn-sm" @click="pin.editando = false">✕</button>
+          </div>
+          <button v-else class="btn-ghost btn-sm" @click="editarPin">{{ pin.activo ? 'Cambiar PIN' : 'Asignar PIN' }}</button>
+        </section>
+
         <section class="card" v-if="empleado.baja">
           <div class="card__titulo">Baja</div>
           <ul class="lista-datos">
@@ -498,6 +515,7 @@ export default {
       ETIQUETA_PERMISO,
       ETIQUETA_MOVIMIENTO,
       empleado: null,
+      pin: { activo: false, editando: false, nuevo: '' },
       documentos: [],
       vacaciones: [],
       incapacidades: [],
@@ -560,6 +578,8 @@ export default {
         this.$router.replace('/empleados')
         return
       }
+      this.pin.activo = (await window.api.sync.pinEmpleado(Number(this.id))).tiene_pin
+      this.pin.editando = false
       const [documentos, vacaciones, incapacidades, permisos, movimientos, conceptos] = await Promise.all([
         window.api.documentos.listar(Number(this.id)),
         window.api.vacaciones.listar({ empleado_id: Number(this.id), estatus: 'todos' }),
@@ -574,6 +594,23 @@ export default {
       this.permisos = permisos
       this.movimientos = movimientos
       this.numConceptos = conceptos.length
+    },
+    editarPin() {
+      this.pin.editando = true
+      this.pin.nuevo = String(Math.floor(100000 + Math.random() * 900000))
+    },
+    async guardarPin() {
+      const res = await window.api.sync.establecerPin({ id: Number(this.id), pin: this.pin.nuevo })
+      if (!res.ok) {
+        this.$store.dispatch('notificar', { mensaje: res.mensaje, tipo: 'error' })
+        return
+      }
+      this.$store.dispatch('notificar', {
+        mensaje: `PIN guardado: ${this.pin.nuevo}. Entrégaselo ahora, no se vuelve a mostrar.`,
+        duracion: 9000
+      })
+      this.pin.activo = true
+      this.pin.editando = false
     },
     async cargarConceptos() {
       this.numConceptos = (await window.api.conceptos.listar({ empleado_id: Number(this.id) })).length

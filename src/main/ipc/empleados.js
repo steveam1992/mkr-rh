@@ -1,6 +1,7 @@
 import { dialog } from 'electron'
 import fs from 'fs'
 import path from 'path'
+import { hashPassword } from '../db'
 import { limpiar, oNulo, num, hoy, round2, antiguedad, edad } from '../utils'
 import { salarioDiarioIntegrado, saldoVacaciones, calcularFiniquito } from '../lft'
 
@@ -138,7 +139,7 @@ export function insertarEmpleado(db, data) {
   return { ok: true, id: Number(info.lastInsertRowid) }
 }
 
-export function register(ipcMain, getDb) {
+export function register(ipcMain, getDb, sync) {
   ipcMain.handle('empleados:listar', (event, filtros = {}) => {
     const db = getDb()
     const condiciones = []
@@ -209,7 +210,21 @@ export function register(ipcMain, getDb) {
     }
   })
 
-  ipcMain.handle('empleados:crear', (event, data) => insertarEmpleado(getDb(), data))
+  ipcMain.handle('empleados:crear', (event, data) => {
+    const res = insertarEmpleado(getDb(), data)
+    if (!res.ok) return res
+    // Con la sincronizacion configurada y con sesion, el empleado nace con PIN de marcaje web.
+    // Se devuelve en claro solo aqui, para entregarlo; en la base queda su hash.
+    const e = sync?.estado()
+    if (e?.configurado && e.con_sesion) {
+      const pin = String(Math.floor(100000 + Math.random() * 900000))
+      const { hash, salt } = hashPassword(pin)
+      getDb().prepare('UPDATE empleados SET pin_hash = ?, pin_salt = ? WHERE id = ?').run(hash, salt, res.id)
+      sync.sincronizar().catch(() => {}) // si no hay red, sube despues
+      return { ...res, pin }
+    }
+    return res
+  })
 
   ipcMain.handle('empleados:actualizar', (event, { id, data }) => {
     const db = getDb()

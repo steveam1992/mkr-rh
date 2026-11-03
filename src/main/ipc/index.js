@@ -13,13 +13,14 @@ import * as asistencia from './asistencia'
 import * as nomina from './nomina'
 import * as dashboard from './dashboard'
 import * as reportes from './reportes'
+import * as sync from './sync'
 
-export function registerIpc(ipcMain, getDb) {
+export function registerIpc(ipcMain, getDb, motor) {
   setup.register(ipcMain, getDb)
   auth.register(ipcMain, getDb)
   config.register(ipcMain, getDb)
   catalogos.register(ipcMain, getDb)
-  empleados.register(ipcMain, getDb)
+  empleados.register(ipcMain, getDb, motor.sync)
   layout.register(ipcMain, getDb)
   documentos.register(ipcMain, getDb)
   conceptos.register(ipcMain, getDb)
@@ -30,4 +31,5 @@ export function registerIpc(ipcMain, getDb) {
   nomina.register(ipcMain, getDb)
   dashboard.register(ipcMain, getDb)
   reportes.register(ipcMain, getDb)
+  sync.register(ipcMain, getDb, motor.sync, motor.vivo)
 }

@@ -241,6 +241,81 @@
         </section>
       </div>
 
+      <!-- Sincronización con la API (v2) -->
+      <div v-else-if="tab === 'sync'" class="columna">
+        <section class="card">
+          <div class="card__titulo">Conexión con el servidor</div>
+          <p class="muted">
+            Con el servidor conectado, los empleados marcan entrada y salida desde la web
+            (<code>/{{ sync.estado?.empresa || 'tu-empresa' }}</code>) y aquí aparece al instante.
+            Sin internet la aplicación sigue funcionando y sube los cambios cuando vuelva la red.
+          </p>
+
+          <template v-if="sync.estado?.con_sesion">
+            <div class="campos">
+              <div class="campo"><label>Servidor</label><div>{{ sync.estado.url }}</div></div>
+              <div class="campo"><label>Empresa</label><div>{{ sync.estado.empresa }}</div></div>
+              <div class="campo"><label>Usuario</label><div>{{ sync.estado.usuario }}</div></div>
+              <div class="campo">
+                <label>En vivo</label>
+                <div>{{ ETIQUETA_VIVO[sync.estado.tiempo_real] || sync.estado.tiempo_real }}</div>
+              </div>
+              <div class="campo"><label>Pendientes por subir</label><div>{{ sync.estado.pendientes }}</div></div>
+              <div class="campo">
+                <label>Última sincronización</label>
+                <div>{{ sync.estado.ultima_sync ? new Date(sync.estado.ultima_sync).toLocaleString() : 'Nunca' }}</div>
+              </div>
+            </div>
+            <p v-if="sync.estado.ultimo_error" class="muted" style="color: var(--red)">
+              Último error: {{ sync.estado.ultimo_error }}
+            </p>
+            <div class="acciones">
+              <button class="btn-secondary btn-sm" :disabled="sync.cargando" @click="sincronizarAhora">
+                {{ sync.cargando ? 'Sincronizando…' : 'Sincronizar ahora' }}
+              </button>
+              <button class="btn-ghost btn-sm" :disabled="sync.cargando" @click="reenviarTodo">Reenviar todo</button>
+              <button class="btn-ghost btn-sm" @click="desconectarSync">Desconectar este equipo</button>
+            </div>
+          </template>
+
+          <template v-else>
+            <div class="campos">
+              <div class="campo">
+                <label>Dirección del servidor</label>
+                <input type="text" v-model="sync.form.url" placeholder="https://rh.miempresa.com" />
+              </div>
+              <div class="campo">
+                <label>Identificador de la empresa</label>
+                <input type="text" v-model="sync.form.empresa" placeholder="empresa-pescadera" />
+              </div>
+              <div class="campo"><label>Usuario</label><input type="text" v-model="sync.form.usuario" /></div>
+              <div class="campo"><label>Contraseña</label><input type="password" v-model="sync.form.password" /></div>
+            </div>
+            <label class="muted" style="display: flex; gap: 8px; align-items: start">
+              <input type="checkbox" v-model="sync.form.equipoPrincipal" style="margin-top: 3px" />
+              <span>
+                <b>Este equipo ya tiene los datos de la empresa.</b> Márcalo solo en la computadora
+                que ya trabaja con los empleados; las demás que se sumen bajan todo del servidor.
+              </span>
+            </label>
+            <p v-if="sync.error" class="muted" style="color: var(--red)">{{ sync.error }}</p>
+            <div class="acciones">
+              <button class="btn-primary btn-sm" :disabled="sync.cargando" @click="conectarSync">
+                {{ sync.cargando ? 'Conectando…' : 'Conectar' }}
+              </button>
+            </div>
+          </template>
+        </section>
+
+        <section class="card" v-if="sync.avisos.length">
+          <div class="card__titulo">Avisos de sincronización</div>
+          <ul class="muted">
+            <li v-for="a in sync.avisos" :key="a.id">{{ a.mensaje }}</li>
+          </ul>
+          <button class="btn-ghost btn-sm" @click="vistosAvisos">Marcar como vistos</button>
+        </section>
+      </div>
+
       <!-- Usuarios -->
       <div v-else-if="tab === 'usuarios'" class="columna">
         <section class="card">
@@ -389,6 +464,7 @@ export default {
         { clave: 'impuestos', label: 'Impuestos y UMA' },
         { clave: 'festivos', label: 'Días festivos' },
         { clave: 'usuarios', label: 'Usuarios' },
+        { clave: 'sync', label: 'Sincronización' },
         { clave: 'datos', label: 'Respaldo' }
       ],
       form: {},
@@ -400,7 +476,15 @@ export default {
       formUsuario: null,
       errorUsuario: '',
       password: { actual: '', nueva: '', confirmacion: '' },
-      errorPassword: ''
+      errorPassword: '',
+      ETIQUETA_VIVO: { conectado: 'Conectado', conectando: 'Conectando…', desconectado: 'Sin conexión en vivo', sondeo: 'Actualización cada 15 s' },
+      sync: {
+        estado: null,
+        form: { url: '', empresa: '', usuario: '', password: '', equipoPrincipal: false },
+        error: '',
+        cargando: false,
+        avisos: []
+      }
     }
   },
   computed: {
@@ -418,8 +502,64 @@ export default {
     this.tarifa = tarifa
     this.festivos = festivos
     this.usuarios = usuarios
+    await this.cargarSync()
+    // El estado y los pendientes cambian solos (socket, ciclo de 5 min): se refrescan en pantalla.
+    this.soltarSync = [
+      window.electronAPI.onEstadoVivo(() => this.cargarSync()),
+      window.electronAPI.onSyncCambios(() => this.cargarSync())
+    ]
+  },
+  beforeUnmount() {
+    this.soltarSync?.forEach((f) => f())
   },
   methods: {
+    async cargarSync() {
+      const [estado, avisos] = await Promise.all([window.api.sync.estado(), window.api.sync.avisos()])
+      this.sync.estado = estado
+      this.sync.avisos = avisos
+      if (estado.url && !this.sync.form.url) this.sync.form.url = estado.url
+    },
+    async conectarSync() {
+      this.sync.error = ''
+      this.sync.cargando = true
+      const res = await window.api.sync.conectar({ ...this.sync.form })
+      this.sync.cargando = false
+      if (!res.ok) {
+        this.sync.error = res.mensaje
+        return
+      }
+      this.sync.form.password = ''
+      this.$store.dispatch('notificar', { mensaje: 'Equipo conectado; sincronizando…' })
+      await this.cargarSync()
+    },
+    async sincronizarAhora() {
+      this.sync.cargando = true
+      const res = await window.api.sync.ahora()
+      this.sync.cargando = false
+      this.$store.dispatch('notificar', res.ok
+        ? { mensaje: `Sincronizado: ${res.resultado.subidos} subidos, ${res.resultado.bajados} recibidos` }
+        : { mensaje: res.mensaje, tipo: 'error' })
+      await this.cargarSync()
+    },
+    async reenviarTodo() {
+      if (!confirm('¿Reenviar todos los datos de este equipo al servidor? Úsalo si el servidor quedó vacío o se recreó.')) return
+      this.sync.cargando = true
+      const res = await window.api.sync.reenviarTodo()
+      this.sync.cargando = false
+      this.$store.dispatch('notificar', res.ok
+        ? { mensaje: `Reenviado: ${res.resultado.subidos} subidos, ${res.resultado.bajados} recibidos` }
+        : { mensaje: res.mensaje, tipo: 'error' })
+      await this.cargarSync()
+    },
+    async desconectarSync() {
+      if (!confirm('¿Desconectar este equipo? Los datos locales se conservan; dejará de sincronizar.')) return
+      await window.api.sync.desconectar()
+      await this.cargarSync()
+    },
+    async vistosAvisos() {
+      await window.api.sync.marcarAvisosVistos()
+      await this.cargarSync()
+    },
     async elegirLogo() {
       const res = await window.api.config.seleccionarLogo()
       if (res.ok) this.form.logo = res.dataUrl

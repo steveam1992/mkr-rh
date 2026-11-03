@@ -1,6 +1,6 @@
 {
   "name": "mkr-rh",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "main": "out/main/index.js",
   "scripts": {
     "build": "electron-vite build",
@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "Sistema de gestion de recursos humanos",
+  "description": "Sistema de gestion de recursos humanos (v2: sincronizacion con API y marcaje web)",
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",
     "electron": "^42.3.0",
