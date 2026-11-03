@@ -119,7 +119,16 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
     }
   }
 
-  async function refrescar() {
+  let refrescando = null // el refresh token se quema al usarse: dos renovaciones a la vez matarian la sesion
+
+  function refrescar() {
+    refrescando ??= renovar().finally(() => {
+      refrescando = null
+    })
+    return refrescando
+  }
+
+  async function renovar() {
     const { refresh_token: refresco } = control()
     if (!refresco) throw new ErrorSync('No hay sesion iniciada en este equipo', 401, 'sin_sesion')
 
@@ -131,7 +140,8 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
         conToken: false
       })
     } catch (e) {
-      if (e.estado === 401) guardarControl({ refresh_token: null })
+      // Solo se borra si el token rechazado sigue siendo el guardado: otra renovacion pudo haberlo cambiado.
+      if (e.estado === 401 && control().refresh_token === refresco) guardarControl({ refresh_token: null })
       throw e
     }
     acceso = datos.token

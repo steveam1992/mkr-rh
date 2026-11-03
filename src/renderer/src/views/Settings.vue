@@ -517,7 +517,10 @@ export default {
       const [estado, avisos] = await Promise.all([window.api.sync.estado(), window.api.sync.avisos()])
       this.sync.estado = estado
       this.sync.avisos = avisos
+      // Si la sesion se cae, el formulario conserva lo que no es secreto; solo falta la contrasena.
       if (estado.url && !this.sync.form.url) this.sync.form.url = estado.url
+      if (estado.empresa && !this.sync.form.empresa) this.sync.form.empresa = estado.empresa
+      if (estado.usuario && !this.sync.form.usuario) this.sync.form.usuario = estado.usuario
     },
     async conectarSync() {
       this.sync.error = ''
