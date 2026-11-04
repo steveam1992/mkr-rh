@@ -17,8 +17,11 @@ import { uuidAsistencia } from './uuidAsistencia.js'
 // cada fila que la app escribe.
 
 const ORDEN = ENTIDADES.map((e) => e.nombre)
-const LOTE = 200
+// Las fotos de empleados viajan en el mismo JSON (hasta 2 MB cada una): un lote chico
+// mantiene la peticion dentro del limite de cuerpo del servidor.
+const LOTE = 50
 const MAX_VUELTAS = 25
+const INTENTOS_OPCIONAL = 3
 
 export class ErrorSync extends Error {
   constructor(mensaje, estado, codigo) {
@@ -81,6 +84,15 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
       uuid || null,
       mensaje
     )
+  }
+
+  /** ¿El rol de esta sesion recibe salario, CURP, RFC...? Si el servidor no lo dice, se asume que si. */
+  const veSensibles = () => {
+    try {
+      return JSON.parse(control().permisos || 'null')?.sensibles !== false
+    } catch {
+      return true
+    }
   }
 
   // -------------------------------------------------------------- http
@@ -287,14 +299,14 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
 
   function idLocalDe(tabla, uuid) {
     if (!uuid) return null
-    return db.prepare(`SELECT id FROM ${tabla} WHERE uuid = ?`).get(uuid)?.id ?? null
+    return db.prepare(`SELECT rowid AS id FROM ${tabla} WHERE uuid = ?`).get(uuid)?.id ?? null
   }
 
-  function diferir(nombre, fila) {
+  function diferir(nombre, fila, contar = true) {
     db.prepare(
       `INSERT INTO sync_diferidos (entidad, uuid, fila, intentos) VALUES (?, ?, ?, 1)
-       ON CONFLICT (entidad, uuid) DO UPDATE SET fila = excluded.fila, intentos = intentos + 1`
-    ).run(nombre, fila.id, JSON.stringify(fila))
+       ON CONFLICT (entidad, uuid) DO UPDATE SET fila = excluded.fila, intentos = intentos + ?`
+    ).run(nombre, fila.id, JSON.stringify(fila), contar ? 1 : 0)
   }
 
   function olvidarDiferida(nombre, uuid) {
@@ -302,7 +314,7 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
   }
 
   /** @returns 'ok' | 'diferida' */
-  function guardarFilaLocal(nombre, fila) {
+  function guardarFilaLocal(nombre, fila, contar = true) {
     const entidad = POR_NOMBRE[nombre]
 
     // Las llaves foraneas llegan como uuid; si el padre aun no baja, se deja para despues.
@@ -315,20 +327,29 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
       }
       const local = idLocalDe(destino, uuid)
       if (local === null) {
-        diferir(nombre, fila)
+        // Un usuario borrado o un jefe que nunca baja no deben dejar el registro atorado para
+        // siempre: tras unos intentos la llave opcional se deja en NULL.
+        const intentos =
+          db.prepare('SELECT intentos FROM sync_diferidos WHERE entidad = ? AND uuid = ?').get(nombre, fila.id)
+            ?.intentos ?? 0
+        if (entidad.opcionales?.includes(columna) && intentos >= INTENTOS_OPCIONAL) {
+          refs[columna] = null
+          continue
+        }
+        diferir(nombre, fila, contar)
         return 'diferida'
       }
       refs[columna] = local
     }
 
-    let existente = db.prepare(`SELECT * FROM ${nombre} WHERE uuid = ?`).get(fila.id)
+    let existente = db.prepare(`SELECT rowid AS rid, * FROM ${nombre} WHERE uuid = ?`).get(fila.id)
     // Sin uuid todavia (p. ej. un dia festivo capturado aqui que otro equipo tambien capturo):
     // si la clave natural coincide es la misma fila, se adopta en vez de chocar.
     if (!existente && entidad.claveNatural) {
       const where = entidad.claveNatural.map((c) => `${c} = ?`).join(' AND ')
       const clave = entidad.claveNatural.map((c) => (Object.hasOwn(refs, c) ? refs[c] : fila[c]))
       if (!clave.includes(null) && !clave.includes(undefined)) {
-        existente = db.prepare(`SELECT * FROM ${nombre} WHERE ${where}`).get(...clave)
+        existente = db.prepare(`SELECT rowid AS rid, * FROM ${nombre} WHERE ${where}`).get(...clave)
       }
     }
     // Una edicion local mas nueva que esta version todavia no subio: gana la local.
@@ -346,8 +367,11 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
     const valorDe = (columna) => {
       if (Object.hasOwn(refs, columna)) return refs[columna]
       const entrante = fila[columna]
-      if (entidad.conservarSiVacio?.includes(columna) && (entrante === null || entrante === '')) {
-        return existente?.[columna] ?? ''
+      const vacio = entrante === null || entrante === ''
+      // Salario, CURP, banco...: un equipo cuyo rol no los ve recibe nulos; se queda con lo suyo.
+      const oculto = !veSensibles() && entidad.sensibles?.includes(columna)
+      if (vacio && (entidad.conservarSiVacio?.includes(columna) || oculto)) {
+        return existente?.[columna] ?? entidad.siVacio?.[columna]?.() ?? ''
       }
       if ((entrante === null || entrante === '') && entidad.siVacio?.[columna]) {
         return entidad.siVacio[columna]()
@@ -376,9 +400,9 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
       if (existente) {
         db.prepare(
           `UPDATE ${nombre} SET ${columnas.map((c) => `${c} = ?`).join(', ')},
-           uuid = ?, actualizado_en = ?, pendiente = 0 WHERE id = ?`
-        ).run(...valores, fila.id, fila.actualizado_en, existente.id)
-        return existente.id
+           uuid = ?, actualizado_en = ?, pendiente = 0 WHERE rowid = ?`
+        ).run(...valores, fila.id, fila.actualizado_en, existente.rid)
+        return existente.rid
       }
       const info = db
         .prepare(
@@ -422,7 +446,7 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
     if (local === null) return
 
     try {
-      db.prepare(`DELETE FROM ${nombre} WHERE id = ?`).run(local)
+      db.prepare(`DELETE FROM ${nombre} WHERE rowid = ?`).run(local)
     } catch (e) {
       // Otro equipo lo borro pero aqui todavia cuelga historial: se conserva y se avisa.
       avisar('borrado_bloqueado', nombre, fila.id, `No se pudo borrar el registro: ${e.message}`)
@@ -470,8 +494,16 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
       sinDisparadores(() => {
         // Primero las altas y ediciones, de padres a hijos...
         for (const nombre of ORDEN) {
-          for (const fila of porEntidad[nombre]) {
-            if (!fila.eliminado) guardarFilaLocal(nombre, fila)
+          // Una tabla que se apunta a si misma (empleado -> jefe) puede traer al jefe despues del
+          // subordinado: se repasa lo diferido mientras cada pasada deje algo guardado.
+          let pendientesDeEntidad = porEntidad[nombre].filter((f) => !f.eliminado)
+          let primera = true // solo la primera pasada cuenta como intento
+          while (pendientesDeEntidad.length) {
+            const diferidas = pendientesDeEntidad.filter((f) => guardarFilaLocal(nombre, f, primera) === 'diferida')
+            primera = false
+            if (diferidas.length === pendientesDeEntidad.length || !POR_NOMBRE[nombre].referencias) break
+            if (!Object.values(POR_NOMBRE[nombre].referencias).includes(nombre)) break
+            pendientesDeEntidad = diferidas
           }
         }
         // ...y despues los borrados, de hijos a padres.

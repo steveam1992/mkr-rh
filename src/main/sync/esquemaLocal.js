@@ -5,6 +5,9 @@ import { ENTIDADES } from './entidadesLocales.js'
 // La idea es no tocar el codigo de MKR RH: los disparadores marcan sola cada fila que la app
 // inserta, edita o borra, asi que los modulos ipc/ siguen escribiendo SQL como siempre.
 
+// Lo que ya viajaba antes de la copia completa.
+const ENTIDADES_V1 = ['configuracion', 'usuarios', 'departamentos', 'puestos', 'dias_festivos', 'empleados', 'asistencia']
+
 const UUID = `lower(
   hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) ||
   '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(hex(randomblob(2)), 2) ||
@@ -31,7 +34,9 @@ CREATE TABLE IF NOT EXISTS sync_control (
   refresh_token  TEXT,
   permisos       TEXT,
   ultima_sync    TEXT,
-  ultimo_error   TEXT
+  ultimo_error   TEXT,
+  -- 1 = ya se reenvio una vez todo lo local con la copia completa (ver prepararEsquema).
+  copia_completa INTEGER NOT NULL DEFAULT 0
 );
 
 INSERT OR IGNORE INTO sync_control (id) VALUES (1);
@@ -75,6 +80,7 @@ function columnasDe(tabla) {
 
 function disparadoresDe(entidad) {
   const t = entidad.nombre
+  // rowid y no id: vacaciones_tabla usa el anio como llave y no tiene columna id.
   // La asistencia no inventa su uuid: se deriva de empleado + fecha (ver estamparAsistencia en
   // mkrrh-sync.js), para que la web y esta computadora hablen de la misma fila.
   const asignaUuid = entidad.uuidFijo ? '' : `uuid = COALESCE(uuid, ${UUID}),`
@@ -83,7 +89,7 @@ function disparadoresDe(entidad) {
       ${asignaUuid}
       actualizado_en = ${AHORA},
       pendiente = 1
-    WHERE id = NEW.id;`
+    WHERE rowid = NEW.rowid;`
 
   const sql = [
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_${t}_uuid ON ${t} (uuid)`,
@@ -127,6 +133,22 @@ export function prepararEsquema(db) {
       }
     }
     for (const sql of disparadoresDe(entidad)) db.exec(sql)
+  }
+
+  // Version anterior: solo viajaban los datos de asistencia. Las filas ya sincronizadas
+  // (empleados, puestos, configuracion...) no estan pendientes, asi que sus datos nuevos
+  // (salario, CURP...) nunca subirian. Se marcan pendientes una sola vez; el disparador les
+  // pone reloj nuevo para que ganen sobre la copia incompleta que tiene el servidor.
+  try {
+    db.exec('ALTER TABLE sync_control ADD COLUMN copia_completa INTEGER NOT NULL DEFAULT 0')
+  } catch (e) {
+    if (!/duplicate column/i.test(e.message)) throw e
+  }
+  if (db.prepare('SELECT copia_completa FROM sync_control WHERE id = 1').get().copia_completa === 0) {
+    for (const nombre of ENTIDADES_V1) {
+      db.exec(`UPDATE ${nombre} SET pendiente = 1 WHERE uuid IS NOT NULL`)
+    }
+    db.exec('UPDATE sync_control SET copia_completa = 1 WHERE id = 1')
   }
 
   // Las filas que ya existian antes de instalar la sincronizacion nacen sin uuid:
