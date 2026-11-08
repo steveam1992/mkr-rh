@@ -288,9 +288,13 @@
                 <label>Identificador de la empresa</label>
                 <input type="text" v-model="sync.form.empresa" placeholder="empresa-pescadera" />
               </div>
-              <div class="campo"><label>Usuario</label><input type="text" v-model="sync.form.usuario" /></div>
+              <div class="campo"><label>Usuario de sincronización</label><input type="text" v-model="sync.form.usuario" autocomplete="off" /></div>
               <div class="campo"><label>Contraseña</label><input type="password" v-model="sync.form.password" /></div>
             </div>
+            <p class="muted">
+              Es la cuenta de servicio de la empresa, distinta a tus usuarios de acceso: no sirve para
+              iniciar sesión en la app. Pídesela a tu administrador.
+            </p>
             <label class="muted" style="display: flex; gap: 8px; align-items: start">
               <input type="checkbox" v-model="sync.form.equipoPrincipal" style="margin-top: 3px" />
               <span>

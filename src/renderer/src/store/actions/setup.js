@@ -22,5 +22,14 @@ export default {
       await dispatch('cargarCatalogos')
     }
     return res
+  },
+  async conectarEmpresa({ commit }, data) {
+    const res = await window.api.setup.conectarEmpresa(data)
+    if (res.ok) {
+      // Los usuarios ya se descargaron: se pasa al login, que carga los catalogos.
+      commit('SET_EMPRESA', res.config)
+      commit('SET_REQUIERE_SETUP', false)
+    }
+    return res
   }
 }

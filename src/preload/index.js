@@ -25,7 +25,8 @@ const invoke = (channel) => (payload) => ipcRenderer.invoke(channel, payload)
 contextBridge.exposeInMainWorld('bridge', {
   setup: {
     estado: invoke('setup:estado'),
-    completar: invoke('setup:completar')
+    completar: invoke('setup:completar'),
+    conectarEmpresa: invoke('setup:conectarEmpresa')
   },
   auth: {
     login: invoke('auth:login'),

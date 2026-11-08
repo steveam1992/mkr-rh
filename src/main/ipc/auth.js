@@ -8,7 +8,23 @@ function toPublic(row) {
   return { id: row.id, usuario: row.usuario, nombre: row.nombre, rol: row.rol, activo: !!row.activo }
 }
 
-export function register(ipcMain, getDb) {
+// Si el equipo esta conectado, pregunta al servidor si el usuario ya existe en la empresa (puede
+// haberlo creado otro equipo que aun no sincroniza aqui). Sin red se valida solo contra lo local.
+async function existeEnServidor(sync, usuario) {
+  try {
+    if (!sync?.estado().con_sesion) return false
+    const token = await sync.tokenDeAcceso()
+    const r = await fetch(`${sync.estado().url.replace(/\/+$/, '')}/usuarios/existe?usuario=${encodeURIComponent(usuario)}`, {
+      headers: { authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(4000)
+    })
+    return r.ok ? (await r.json()).existe === true : false
+  } catch {
+    return false
+  }
+}
+
+export function register(ipcMain, getDb, sync) {
   ipcMain.handle('auth:login', (event, { usuario, password }) => {
     const db = getDb()
     const row = db.prepare('SELECT * FROM usuarios WHERE usuario = ? AND activo = 1').get(usuario || '')
@@ -23,14 +39,15 @@ export function register(ipcMain, getDb) {
     return db.prepare('SELECT id, usuario, nombre, rol, activo FROM usuarios ORDER BY nombre').all().map(toPublic)
   })
 
-  ipcMain.handle('auth:crearUsuario', (event, { usuario, password, nombre, rol }) => {
+  ipcMain.handle('auth:crearUsuario', async (event, { usuario, password, nombre, rol }) => {
     const db = getDb()
     const user = limpiar(usuario)
     if (!user) return { ok: false, mensaje: 'Escribe el nombre de usuario' }
     if (/\s/.test(user)) return { ok: false, mensaje: 'El nombre de usuario no puede llevar espacios' }
     if (!limpiar(nombre)) return { ok: false, mensaje: 'Escribe el nombre de la persona' }
     if ((password || '').length < 4) return { ok: false, mensaje: 'La contraseña debe tener al menos 4 caracteres' }
-    if (db.prepare('SELECT id FROM usuarios WHERE usuario = ?').get(user)) {
+    // Sin distinguir mayusculas: el servidor tampoco las distingue ("Ana" y "ana" chocarian al sincronizar).
+    if (db.prepare('SELECT id FROM usuarios WHERE lower(usuario) = lower(?)').get(user) || (await existeEnServidor(sync, user))) {
       return { ok: false, mensaje: 'Ese nombre de usuario ya existe' }
     }
 

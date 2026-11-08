@@ -557,6 +557,7 @@ export function crearSync({ db, traer = globalThis.fetch, alAvanzar = null, alMa
         empresa: c.empresa,
         usuario,
         password,
+        canal: 'sync',
         dispositivo: {
           id: c.dispositivo_id || undefined,
           nombre: nombreEquipo || c.usuario || usuario,

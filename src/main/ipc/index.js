@@ -16,8 +16,8 @@ import * as reportes from './reportes'
 import * as sync from './sync'
 
 export function registerIpc(ipcMain, getDb, motor) {
-  setup.register(ipcMain, getDb)
-  auth.register(ipcMain, getDb)
+  setup.register(ipcMain, getDb, motor.sync, motor.vivo)
+  auth.register(ipcMain, getDb, motor.sync)
   config.register(ipcMain, getDb)
   catalogos.register(ipcMain, getDb)
   empleados.register(ipcMain, getDb, motor.sync)

@@ -1,10 +1,51 @@
 <template>
   <div class="publica">
-    <form class="tarjeta" @submit.prevent="siguiente">
+    <div class="tarjeta" v-if="modo === null">
       <h1>Configuración inicial</h1>
+      <p class="tarjeta__sub">Es la primera vez que abres el sistema. ¿Tu empresa ya está registrada en MKR RH?</p>
+      <div class="opciones">
+        <button type="button" class="btn-primary" @click="modo = 'existente'">Sí, ya tengo empresa</button>
+        <button type="button" class="btn-secondary" @click="modo = 'nueva'">No, registrar una empresa nueva</button>
+      </div>
+    </div>
+
+    <form class="tarjeta" v-else-if="modo === 'existente'" @submit.prevent="conectar">
+      <h1>Conectar con tu empresa</h1>
       <p class="tarjeta__sub">
-        Es la primera vez que abres el sistema. Registra tu empresa y la cuenta del administrador.
+        Captura los datos de sincronización con el usuario de sincronización de la empresa (no es un
+        usuario de acceso). Se descargarán la empresa, los usuarios y la información; después
+        inicias sesión con tu usuario de acceso.
       </p>
+      <div class="campo">
+        <label>Servidor</label>
+        <input type="text" v-model="conexion.url" placeholder="https://rh.miempresa.com" autofocus required />
+      </div>
+      <div class="campo">
+        <label>Alias de la empresa</label>
+        <input type="text" v-model="conexion.empresa" placeholder="empresa-pescadera" required />
+      </div>
+      <div class="campos">
+        <div class="campo">
+          <label>Usuario de sincronización</label>
+          <input type="text" v-model="conexion.usuario" autocomplete="off" required />
+        </div>
+        <div class="campo">
+          <label>Contraseña</label>
+          <input type="password" v-model="conexion.password" required />
+        </div>
+      </div>
+      <p class="error" v-if="error">{{ error }}</p>
+      <div class="acciones">
+        <button class="btn-ghost" type="button" :disabled="cargando" @click="volver">Atrás</button>
+        <button class="btn-primary crece" type="submit" :disabled="cargando">
+          {{ cargando ? 'Conectando y descargando datos…' : 'Conectar' }}
+        </button>
+      </div>
+    </form>
+
+    <form class="tarjeta" v-else @submit.prevent="siguiente">
+      <h1>Configuración inicial</h1>
+      <p class="tarjeta__sub">Registra tu empresa y la cuenta del administrador.</p>
 
       <div class="pasos">
         <span class="paso" :class="{ 'paso--on': paso >= 1 }">1 · Empresa</span>
@@ -85,7 +126,7 @@
       <p class="error" v-if="error">{{ error }}</p>
 
       <div class="acciones">
-        <button class="btn-ghost" type="button" v-if="paso > 1" :disabled="cargando" @click="paso--">
+        <button class="btn-ghost" type="button" :disabled="cargando" @click="paso > 1 ? paso-- : volver()">
           Atrás
         </button>
         <button class="btn-primary crece" type="submit" :disabled="cargando">
@@ -103,6 +144,8 @@ export default {
   name: 'Setup',
   data() {
     return {
+      modo: null, // null = preguntando | 'existente' | 'nueva'
+      conexion: { url: '', empresa: '', usuario: '', password: '' },
       paso: 1,
       empresa: {
         nombre_empresa: '',
@@ -124,7 +167,22 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['completarSetup']),
+    ...mapActions(['completarSetup', 'conectarEmpresa']),
+    volver() {
+      this.error = ''
+      this.modo = null
+    },
+    async conectar() {
+      this.error = ''
+      this.cargando = true
+      try {
+        const res = await this.conectarEmpresa({ ...this.conexion })
+        if (res.ok) this.$router.replace('/login')
+        else this.error = res.mensaje || 'No se pudo conectar con la empresa'
+      } finally {
+        this.cargando = false
+      }
+    },
     async elegirLogo() {
       const res = await window.api.config.seleccionarLogo()
       if (res.ok) this.empresa.logo = res.dataUrl
@@ -283,6 +341,12 @@ h1 {
   display: flex;
   gap: 8px;
   margin-top: 22px;
+}
+
+.opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .crece {

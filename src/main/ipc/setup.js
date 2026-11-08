@@ -1,9 +1,42 @@
 import { hashPassword, requiereSetup } from '../db'
 import { limpiar, oNulo } from '../utils'
 
-export function register(ipcMain, getDb) {
+export function register(ipcMain, getDb, sync, vivo) {
   ipcMain.handle('setup:estado', () => {
     return { requiereSetup: requiereSetup() }
+  })
+
+
+  // "Ya tengo empresa": en vez de crearla, este equipo se conecta al servidor, baja la
+  // configuracion, los usuarios y los datos de la empresa y queda listo para iniciar sesion.
+  ipcMain.handle('setup:conectarEmpresa', async (event, { url, empresa, usuario, password }) => {
+    if (!requiereSetup()) {
+      return { ok: false, mensaje: 'La configuración inicial ya fue realizada en este equipo' }
+    }
+    const db = getDb()
+    try {
+      sync.configurar({ url: String(url || '').trim(), empresa: String(empresa || '').trim().toLowerCase() })
+      // equipoPrincipal = false: este equipo baja primero, no pisa la config real con la de fabrica.
+      await sync.iniciarSesion({ usuario, password, equipoPrincipal: false })
+      await sync.sincronizar()
+
+      if (db.prepare('SELECT COUNT(*) AS n FROM usuarios').get().n === 0) {
+        throw new Error('La empresa no tiene usuarios para descargar. Verifica los datos de conexión')
+      }
+      // setup_completado es estado de la instalacion: se marca sin disparar la sincronizacion.
+      db.prepare('UPDATE sync_control SET aplicando = 1 WHERE id = 1').run()
+      try {
+        db.prepare('UPDATE configuracion SET setup_completado = 1 WHERE id = 1').run()
+      } finally {
+        db.prepare('UPDATE sync_control SET aplicando = 0 WHERE id = 1').run()
+      }
+      vivo.iniciar()
+      return { ok: true, config: db.prepare('SELECT * FROM configuracion WHERE id = 1').get() }
+    } catch (e) {
+      vivo.detener()
+      sync.cerrarSesion()
+      return { ok: false, mensaje: e.message }
+    }
   })
 
   ipcMain.handle('setup:completar', (event, data) => {
